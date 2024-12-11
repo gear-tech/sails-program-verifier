@@ -1,0 +1,12 @@
+FROM ghcr.io/gear-tech/sails-program-builder:0.7.1
+
+COPY build.sh .
+
+RUN mkdir /mnt/build
+
+WORKDIR /app
+
+ENV REPO_URL=$REPO_URL
+ENV PROJECT_NAME=$PROJECT_NAME
+
+CMD ["/bin/sh", "../build.sh"]
