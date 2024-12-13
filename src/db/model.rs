@@ -9,8 +9,9 @@ use diesel::{
 };
 use serde::Serialize;
 use std::{io::Write, time::SystemTime};
+use utoipa::ToSchema;
 
-#[derive(Queryable, Selectable, Insertable, Serialize)]
+#[derive(Queryable, Selectable, Insertable, Serialize, ToSchema)]
 #[diesel(table_name = schema::code)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Code {
@@ -46,7 +47,7 @@ impl Code {
     }
 }
 
-#[derive(Queryable, Selectable, Insertable, Serialize)]
+#[derive(Queryable, Selectable, Insertable, Serialize, ToSchema)]
 #[diesel(table_name = schema::idl)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Idl {

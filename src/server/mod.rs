@@ -10,12 +10,14 @@ use axum::{
     Json, Router,
 };
 use error::AppError;
-use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use utoipa::{IntoParams, OpenApi, ToSchema};
+use utoipa_swagger_ui::SwaggerUi;
 
 mod error;
 
-#[derive(Default, Deserialize, Debug)]
+#[derive(Default, Deserialize, Debug, ToSchema)]
 enum Project {
     #[default]
     Root,
@@ -23,7 +25,7 @@ enum Project {
     PathToCargoToml(String),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema)]
 struct VerifyRequest {
     pub repo_link: String,
     pub version: String,
@@ -33,11 +35,14 @@ struct VerifyRequest {
     pub build_idl: Option<bool>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, ToSchema)]
 struct VerifyResponse {
     pub id: String,
 }
 
+#[utoipa::path(post, path="/verify", request_body=VerifyRequest, responses(
+    (status = 200, description="Verification request accepted", body=VerifyResponse)
+))]
 async fn verify(
     State(pool): State<Arc<Pool>>,
     Json(VerifyRequest {
@@ -81,63 +86,72 @@ async fn verify(
     }))
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize, ToSchema)]
 struct StatusResponse {
     pub status: String,
 }
 
+#[derive(Deserialize, IntoParams)]
+struct IdQueryParams {
+    id: String,
+}
+
+#[utoipa::path(get, path="/verify/status", params(IdQueryParams), responses(
+    (status = 200, description="Status of the verification request", body=StatusResponse)
+))]
 async fn status(
     State(pool): State<Arc<Pool>>,
-    Query(params): Query<HashMap<String, String>>,
+    Query(params): Query<IdQueryParams>,
 ) -> Result<Json<StatusResponse>, StatusCode> {
-    if let Some(id) = params.get("id") {
-        let conn = &mut pool.get().unwrap();
+    let conn = &mut pool.get().unwrap();
 
-        if let Some(verif) = Verification::get(conn, id) {
-            Ok(Json(StatusResponse {
-                status: verif.status.into(),
-            }))
-        } else {
-            Err(StatusCode::NOT_FOUND)
-        }
+    if let Some(verif) = Verification::get(conn, &params.id) {
+        Ok(Json(StatusResponse {
+            status: verif.status.into(),
+        }))
     } else {
-        Err(StatusCode::BAD_REQUEST)
+        Err(StatusCode::NOT_FOUND)
     }
 }
 
+#[utoipa::path(get, path="/code", params(IdQueryParams), responses(
+    (status = 200, description="Code by id", body=Code)
+))]
 async fn code(
     State(pool): State<Arc<Pool>>,
-    Query(params): Query<HashMap<String, String>>,
+    Query(params): Query<IdQueryParams>,
 ) -> Result<Json<Code>, StatusCode> {
-    if let Some(id) = params.get("id") {
-        let conn = &mut pool.get().unwrap();
+    let conn = &mut pool.get().unwrap();
 
-        if let Some(code) = Code::get(conn, id) {
-            Ok(Json(code))
-        } else {
-            Err(StatusCode::NOT_FOUND)
-        }
+    if let Some(code) = Code::get(conn, &params.id) {
+        Ok(Json(code))
     } else {
-        Err(StatusCode::BAD_REQUEST)
+        Err(StatusCode::NOT_FOUND)
     }
 }
 
+#[utoipa::path(get, path="/idl", params(IdQueryParams), responses(
+    (status = 200, description="Idl by id", body=Idl)
+))]
 async fn idl(
     State(pool): State<Arc<Pool>>,
-    Query(params): Query<HashMap<String, String>>,
+    Query(params): Query<IdQueryParams>,
 ) -> Result<Json<Idl>, StatusCode> {
-    if let Some(id) = params.get("id") {
-        let conn = &mut pool.get().unwrap();
+    let conn = &mut pool.get().unwrap();
 
-        if let Some(idl) = Idl::get(conn, id) {
-            Ok(Json(idl))
-        } else {
-            Err(StatusCode::NOT_FOUND)
-        }
+    if let Some(idl) = Idl::get(conn, &params.id) {
+        Ok(Json(idl))
     } else {
-        Err(StatusCode::BAD_REQUEST)
+        Err(StatusCode::NOT_FOUND)
     }
 }
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(verify, status, code, idl),
+    components(schemas(VerifyRequest, VerifyResponse, Code, Idl, StatusResponse))
+)]
+struct ApiDoc;
 
 pub async fn run_server(pool: Arc<Pool>) {
     let app = Router::new()
@@ -145,7 +159,8 @@ pub async fn run_server(pool: Arc<Pool>) {
         .route("/verify/status", get(status))
         .route("/code", get(code))
         .route("/idl", get(idl))
-        .with_state(pool);
+        .with_state(pool)
+        .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", ApiDoc::openapi()));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
