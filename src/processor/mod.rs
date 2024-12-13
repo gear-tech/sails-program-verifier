@@ -25,7 +25,7 @@ pub mod network_client;
 pub use docker::{prune_containers, pull_docker_image};
 
 const MAX_VERIFS_IN_PROGRESS: i64 = 10;
-const CHECK_INTERVAL: Duration = Duration::from_secs(3);
+const CHECK_INTERVAL: Duration = Duration::from_secs(60);
 
 fn new_verifications(
     pool: Arc<Pool>,
@@ -107,7 +107,7 @@ fn process_verif(
             let verif_clone = verif.clone();
 
             if let Err(err) = start_verification(pool_clone.clone(), verif_clone.clone()).await {
-                log::error!("ID: {}. Err: {:?}", &id, err);
+                log::warn!("ID: {}. Err: {:?}", &id, err);
             } else if let Err(err) =
                 check_code_onchain(clients.clone(), pool_clone.clone(), verif_clone.clone()).await
             {
@@ -131,6 +131,7 @@ async fn start_verification(pool: Arc<Pool>, verif: Verification) -> Result<()> 
             Verification::update(&mut conn, &verif.id, VerificationStatus::Verified, None)?;
             Err(anyhow!("Code already verified"))
         } else if Verification::is_verification_in_progress(&mut conn, &verif.code_id, &verif.id) {
+            Verification::update(&mut conn, &verif.id, VerificationStatus::Pending, None)?;
             Err(anyhow!("Verification in progress"))
         } else {
             Ok(())
@@ -176,8 +177,9 @@ async fn check_code_onchain(
 }
 
 async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
-    log::info!("Building project: {}", &verif.id);
+    log::info!("ID: {}. Building project", &verif.id);
     let build_res = build_code(verif.clone()).await;
+    log::info!("ID: {}. Code built", &verif.id);
 
     tokio::task::spawn_blocking(move || {
         let mut conn = pool.get().expect("Failed to get connection");
@@ -211,7 +213,8 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
 
             if let Some(idl) = artifacts.idl {
                 idl_hash = Some(hash_idl(&idl));
-                Idl::new(&mut conn, idl_hash.as_ref().unwrap(), idl)?;
+                Idl::save(&mut conn, idl_hash.as_ref().unwrap(), idl)?;
+                log::info!("ID: {}. Idl saved", &verif.id);
             }
             Code::new(
                 &mut conn,
@@ -220,7 +223,9 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
                 artifacts.name,
                 idl_hash,
             )?;
+            log::info!("ID: {}. Code meta saved", &verif.id);
             Verification::update(&mut conn, &verif.id, VerificationStatus::Verified, None)?;
+            log::info!("ID: {}. Verification completed", &verif.id);
         }
 
         Ok(())

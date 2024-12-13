@@ -1,7 +1,10 @@
 use crate::consts::IMAGE_NAME;
 use anyhow::Result;
 use bollard::{
-    container::{Config, CreateContainerOptions, PruneContainersOptions, WaitContainerOptions},
+    container::{
+        Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
+        WaitContainerOptions,
+    },
     image::{CreateImageOptions, ListImagesOptions},
     secret::HostConfig,
     Docker,
@@ -13,11 +16,28 @@ use tokio_stream::StreamExt;
 pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
 
-    docker
-        .prune_containers(Some(PruneContainersOptions {
-            filters: HashMap::<&str, Vec<&str>>::new(),
+    let filters: HashMap<String, Vec<String>> = HashMap::new();
+
+    let containers = docker
+        .list_containers(Some(ListContainersOptions {
+            all: true,
+            filters,
+            ..Default::default()
         }))
         .await?;
+
+    for c in containers {
+        let id = c.id.unwrap();
+        docker
+            .remove_container(
+                &id,
+                Some(RemoveContainerOptions {
+                    force: true,
+                    ..Default::default()
+                }),
+            )
+            .await?;
+    }
 
     Ok(())
 }

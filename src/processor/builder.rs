@@ -1,7 +1,10 @@
 use super::docker::{build_program, remove_container};
 use crate::{consts::PATH_TO_BUILDS, db::Verification, util::generate_code_id};
 use anyhow::bail;
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 pub struct BuildArtifacts {
     pub code_id: String,
@@ -28,15 +31,15 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
 
     let built_files = fs::read_dir(&project_path)?;
 
-    let mut wasm_path: Option<String> = None;
-    let mut idl_path: Option<String> = None;
+    let mut wasm_path: Option<PathBuf> = None;
+    let mut idl_path: Option<PathBuf> = None;
 
     for entry in built_files {
         let path = entry.as_ref().unwrap().path().to_str().unwrap().to_string();
         if path.ends_with(".opt.wasm") {
-            wasm_path = Some(path);
+            wasm_path = Some(entry.as_ref().unwrap().path());
         } else if path.ends_with(".idl") {
-            idl_path = Some(path);
+            idl_path = Some(entry.as_ref().unwrap().path());
         }
     }
 
@@ -46,6 +49,7 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
 
     let code = fs::read(&wasm_path)?;
     let code_id = generate_code_id(&code);
+    let code_filename = wasm_path.file_name().unwrap().to_str().unwrap();
 
     let idl = if verif.build_idl {
         let Some(idl_path) = idl_path else {
@@ -61,6 +65,6 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
     Ok(BuildArtifacts {
         code_id,
         idl,
-        name: wasm_path[..(wasm_path.len() - ".opt.wasm".len())].to_string(),
+        name: code_filename[..(code_filename.len() - ".opt.wasm".len())].to_string(),
     })
 }

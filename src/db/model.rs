@@ -10,7 +10,7 @@ use diesel::{
 use serde::Serialize;
 use std::{io::Write, time::SystemTime};
 
-#[derive(Queryable, Selectable, Insertable)]
+#[derive(Queryable, Selectable, Insertable, Serialize)]
 #[diesel(table_name = schema::code)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Code {
@@ -46,7 +46,7 @@ impl Code {
     }
 }
 
-#[derive(Queryable, Selectable, Insertable)]
+#[derive(Queryable, Selectable, Insertable, Serialize)]
 #[diesel(table_name = schema::idl)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Idl {
@@ -55,11 +55,11 @@ pub struct Idl {
 }
 
 impl Idl {
-    pub fn new(
+    pub fn save(
         conn: &mut PgConnection,
         id: &str,
         content: String,
-    ) -> Result<Idl, diesel::result::Error> {
+    ) -> Result<(), diesel::result::Error> {
         let idl = Idl {
             id: id.to_string(),
             content,
@@ -68,7 +68,10 @@ impl Idl {
         diesel::insert_into(schema::idl::table)
             .values(&idl)
             .returning(Idl::as_returning())
-            .get_result(conn)
+            .on_conflict_do_nothing()
+            .execute(conn)?;
+
+        Ok(())
     }
 
     pub fn get(conn: &mut PgConnection, id: &str) -> Option<Idl> {
