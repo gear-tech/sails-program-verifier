@@ -1,6 +1,7 @@
 REPO_URL=$REPO_URL
 PROJECT_NAME=$PROJECT_NAME
 BUILD_IDL=$BUILD_IDL
+PATH_TO_CARGO_TOML=$PATH_TO_CARGO_TOML
 
 # Clone the repo exit on error
 echo "Clonning repository $REPO_URL"
@@ -14,7 +15,9 @@ fi
 
 MANIFEST_PATH="pumpum."
 
-if [ -z "$PROJECT_NAME" ]; then
+if [ -n "$PATH_TO_CARGO_TOML" ]; then
+    MANIFEST_PATH=$PATH_TO_CARGO_TOML
+elif [ -z "$PROJECT_NAME" ]; then
     MANIFEST_PATH=$(cargo locate-project | jq -r '.root')
 else
     MANIFEST_PATH=$(cargo metadata --format-version 1 --no-deps | jq -r --arg name "$PROJECT_NAME" '.packages[] | select(.name == $name) | .manifest_path')

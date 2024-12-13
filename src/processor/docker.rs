@@ -55,6 +55,7 @@ pub async fn build_program(
     project_path: &str,
     repo_url: &str,
     project_name: Option<String>,
+    path_to_cargo_toml: Option<String>,
     build_idl: bool,
     version: &str,
 ) -> Result<String> {
@@ -70,8 +71,12 @@ pub async fn build_program(
     volumes.insert(&mount, HashMap::default());
 
     let repo_url_env = format!("REPO_URL={}", repo_url);
-    let project_name_env = format!("PROJECT_NAME={}", project_name.unwrap_or("".into()));
-    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env];
+    let project_name_env = format!("PROJECT_NAME={}", project_name.unwrap_or_default());
+    let path_to_cargo_toml_env = format!(
+        "PATH_TO_CARGO_TOML={}",
+        path_to_cargo_toml.unwrap_or_default()
+    );
+    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &path_to_cargo_toml_env];
     if build_idl {
         env.push("BUILD_IDL=true");
     }

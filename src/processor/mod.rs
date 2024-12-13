@@ -25,7 +25,7 @@ pub mod network_client;
 pub use docker::{prune_containers, pull_docker_image};
 
 const MAX_VERIFS_IN_PROGRESS: i64 = 10;
-const CHECK_INTERVAL: Duration = Duration::from_secs(60);
+const CHECK_INTERVAL: Duration = Duration::from_secs(30);
 
 fn new_verifications(
     pool: Arc<Pool>,

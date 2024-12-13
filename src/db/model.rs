@@ -88,6 +88,7 @@ pub struct Verification {
     pub repo_link: String,
     pub code_id: String,
     pub project_name: Option<String>,
+    pub path_to_cargo_toml: Option<String>,
     pub build_idl: bool,
     pub version: String,
     pub status: VerificationStatus,

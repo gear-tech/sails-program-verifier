@@ -22,6 +22,7 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         project_path.to_str().unwrap(),
         &verif.repo_link,
         verif.project_name.clone(),
+        verif.path_to_cargo_toml.clone(),
         verif.build_idl,
         verif.version.as_str(),
     )

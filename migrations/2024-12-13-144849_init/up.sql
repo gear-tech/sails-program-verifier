@@ -13,6 +13,7 @@ CREATE TABLE "verification" (
     "repo_link" VARCHAR NOT NULL,
     "code_id" VARCHAR NOT NULL,
     "project_name" VARCHAR,
+    "path_to_cargo_toml" VARCHAR,
     "build_idl" BOOL NOT NULL,
     "version" VARCHAR NOT NULL,
     "status" VERIFICATIONSTATUS NOT NULL,

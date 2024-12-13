@@ -15,11 +15,19 @@ use std::{collections::HashMap, sync::Arc};
 
 mod error;
 
-#[derive(Deserialize)]
+#[derive(Default, Deserialize, Debug)]
+enum Project {
+    #[default]
+    Root,
+    Name(String),
+    PathToCargoToml(String),
+}
+
+#[derive(Deserialize, Debug)]
 struct VerifyRequest {
     pub repo_link: String,
     pub version: String,
-    pub project_name: Option<String>,
+    pub project: Option<Project>,
     pub network: String,
     pub code_id: String,
     pub build_idl: Option<bool>,
@@ -35,7 +43,7 @@ async fn verify(
     Json(VerifyRequest {
         repo_link,
         code_id,
-        project_name,
+        project,
         version,
         network,
         build_idl,
@@ -45,6 +53,12 @@ async fn verify(
 
     check_docker_version(&version)?;
 
+    let (project_name, path_to_cargo_toml) = match project.unwrap_or_default() {
+        Project::Root => (None, None),
+        Project::Name(name) => (Some(name), None),
+        Project::PathToCargoToml(path) => (None, Some(path)),
+    };
+
     Verification::save(
         &mut pool.get().unwrap(),
         Verification {
@@ -52,6 +66,7 @@ async fn verify(
             repo_link,
             code_id,
             project_name,
+            path_to_cargo_toml,
             version,
             status: VerificationStatus::Pending,
             network: network.try_into()?,
