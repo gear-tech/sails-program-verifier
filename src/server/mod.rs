@@ -11,7 +11,7 @@ use axum::{
 };
 use error::AppError;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{sync::Arc, time::UNIX_EPOCH};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -89,6 +89,8 @@ async fn verify(
 #[derive(Serialize, ToSchema)]
 struct StatusResponse {
     pub status: String,
+    pub failed_reason: Option<String>,
+    pub created_at: u128,
 }
 
 #[derive(Deserialize, IntoParams)]
@@ -108,6 +110,12 @@ async fn status(
     if let Some(verif) = Verification::get(conn, &params.id) {
         Ok(Json(StatusResponse {
             status: verif.status.into(),
+            failed_reason: verif.failed_reason,
+            created_at: verif
+                .created_at
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis(),
         }))
     } else {
         Err(StatusCode::NOT_FOUND)

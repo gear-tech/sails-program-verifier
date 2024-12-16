@@ -185,13 +185,14 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
         let mut conn = pool.get().expect("Failed to get connection");
 
         if let Err(err) = build_res {
+            let err_msg = format!("Failed to build project. {:?}", err);
             Verification::update(
                 &mut conn,
                 &verif.id,
                 VerificationStatus::Failed,
-                Some("Failed to build project".into()),
+                Some(err_msg.clone()),
             )?;
-            bail!("Failed to build project. {:?}", err);
+            bail!(err_msg);
         }
 
         let artifacts = build_res.unwrap();
