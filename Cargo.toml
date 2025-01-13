@@ -1,7 +1,12 @@
 [package]
 name = "program-verifier"
 version = "0.1.0"
+authors = ["Gear Technologies"]
 edition = "2021"
+license = "GPL-3.0"
+homepage = "https://gear-tech.io"
+repository = "https://github.com/gear-tech/gear"
+description = "Service for verifying Sails programs"
 
 [dependencies]
 anyhow = "1.0.91"
