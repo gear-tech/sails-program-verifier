@@ -1,0 +1,72 @@
+name: "docker-release"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  version:
+    name: "Extract version"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.version }}
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Extract version"
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-and-push-builder:
+    name: "Build and push sails-program-builder image"
+    runs-on: ubuntu-latest
+    needs: version
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Login to the GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Build and push sails-program-builder image"
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/gear-tech/sails-program-builder:${{ needs.version.outputs.version }}
+
+  build-and-push-verifier:
+    name: "Build and push sails-program-verifier image"
+    runs-on: ubuntu-latest
+    needs: version
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Login to the GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Build and push sails-program-verifier image"
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile-verifier
+          push: true
+          tags: ghcr.io/gear-tech/sails-program-verifier:${{ needs.version.outputs.version }}
