@@ -3471,33 +3471,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "program-verifier"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-stream",
- "axum",
- "blake2",
- "bollard",
- "diesel",
- "dotenvy",
- "env_logger 0.11.5",
- "futures",
- "gsdk",
- "hex",
- "http 1.2.0",
- "log",
- "r2d2",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
- "utoipa",
- "utoipa-swagger-ui",
-]
-
-[[package]]
 name = "psm"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3955,6 +3928,33 @@ name = "ryu"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
+
+[[package]]
+name = "sails-program-verifier"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-stream",
+ "axum",
+ "blake2",
+ "bollard",
+ "diesel",
+ "dotenvy",
+ "env_logger 0.11.5",
+ "futures",
+ "gsdk",
+ "hex",
+ "http 1.2.0",
+ "log",
+ "r2d2",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
 
 [[package]]
 name = "same-file"
