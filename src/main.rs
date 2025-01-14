@@ -1,4 +1,4 @@
-use program_verifier::{
+use sails_program_verifier::{
     consts::AVAILABLE_VERSIONS,
     db::{get_connection_pool, Verification},
     prune_containers, pull_docker_image, run_processor, run_server,

@@ -154,6 +154,13 @@ async fn idl(
     }
 }
 
+#[utoipa::path(get, path="/version", responses(
+    (status = 200, description="Version of the server", body=String)
+))]
+async fn version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
+}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(verify, status, code, idl),
@@ -167,6 +174,7 @@ pub async fn run_server(pool: Arc<Pool>) {
         .route("/verify/status", get(status))
         .route("/code", get(code))
         .route("/idl", get(idl))
+        .route("/version", get(version))
         .with_state(pool)
         .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", ApiDoc::openapi()));
 

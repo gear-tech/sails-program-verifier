@@ -1,5 +1,5 @@
 [package]
-name = "program-verifier"
+name = "sails-program-verifier"
 version = "0.1.0"
 authors = ["Gear Technologies"]
 edition = "2021"
