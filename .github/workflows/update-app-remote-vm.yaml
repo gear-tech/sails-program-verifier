@@ -18,8 +18,6 @@ jobs:
             ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Run Ansible Playbook on Remote Machine
-        env:
-          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.REMOTE_HOST }} << 'EOF'
           cd /home/ubuntu
