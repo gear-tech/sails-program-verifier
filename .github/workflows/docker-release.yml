@@ -45,7 +45,9 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/gear-tech/sails-program-builder:${{ needs.version.outputs.version }}
+          tags: |
+            ghcr.io/gear-tech/sails-program-builder:${{ needs.version.outputs.version }}
+            ghcr.io/gear-tech/sails-program-builder:latest
 
   build-and-push-verifier:
     name: "Build and push sails-program-verifier image"
@@ -69,4 +71,6 @@ jobs:
           context: .
           file: Dockerfile-verifier
           push: true
-          tags: ghcr.io/gear-tech/sails-program-verifier:${{ needs.version.outputs.version }}
+          tags: |
+            ghcr.io/gear-tech/sails-program-verifier:${{ needs.version.outputs.version }}
+            ghcr.io/gear-tech/sails-program-verifier:latest
