@@ -1,0 +1,27 @@
+name: Update App on Remote VM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: |
+            ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run Ansible Playbook on Remote Machine
+        env:
+          VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.REMOTE_HOST }} << 'EOF'
+          cd /home/ubuntu
+          ansible-playbook update.yml --vault-password-file vault_pass.txt
+          EOF
