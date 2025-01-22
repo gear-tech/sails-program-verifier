@@ -19,7 +19,7 @@ jobs:
 
       - name: Run Ansible Playbook on Remote Machine
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.REMOTE_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i ~/.ssh/id_rsa ubuntu@${{ secrets.REMOTE_HOST }} << 'EOF'
           cd /home/ubuntu
           sudo ansible-playbook update.yml --vault-password-file vault_pass.txt
           EOF
