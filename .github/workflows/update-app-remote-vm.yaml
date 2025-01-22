@@ -21,5 +21,5 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.REMOTE_HOST }} << 'EOF'
           cd /home/ubuntu
-          ansible-playbook update.yml --vault-password-file vault_pass.txt
+          sudo ansible-playbook update.yml --vault-password-file vault_pass.txt
           EOF
