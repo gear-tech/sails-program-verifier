@@ -16,8 +16,10 @@ The verification service itself relies on these images when processing verificat
 Developers can use the provided Docker images to compile their contracts with the correct environment. Here’s an example command:
 
 ```sh
-docker run -v $(pwd):/app --entrypoint /bin/bash ghcr.io/gear-tech/sails-program-builder:0.7.1 -c 'cargo build --release'
+docker run -v $(pwd):/app --entrypoint /bin/bash ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build --release'
 ```
+
+Check available versions [here](https://github.com/gear-tech/sails-program-verifier/pkgs/container/sails-program-builder)
 
 ## API Documentation
 
