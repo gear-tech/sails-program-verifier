@@ -52,7 +52,7 @@ jobs:
   build-and-push-verifier:
     name: "Build and push sails-program-verifier image"
     runs-on: ubuntu-latest
-    needs: version
+    needs: [version, build-and-push-builder]
 
     steps:
       - name: "Checkout"

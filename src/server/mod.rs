@@ -1,5 +1,6 @@
 use crate::{
     common::Pool,
+    consts::AVAILABLE_VERSIONS,
     db::{Code, Idl, Verification, VerificationStatus},
     util::{check_docker_version, generate_id},
 };
@@ -161,9 +162,16 @@ async fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+#[utoipa::path(get, path="/supported_versions", responses(
+    (status = 200, description="Supported Sails versions", body=Vec<String>)
+))]
+async fn supported_versions() -> Json<Vec<&'static str>> {
+    Json(AVAILABLE_VERSIONS.to_vec())
+}
+
 #[derive(OpenApi)]
 #[openapi(
-    paths(verify, status, code, idl),
+    paths(verify, status, code, idl, supported_versions),
     components(schemas(VerifyRequest, VerifyResponse, Code, Idl, StatusResponse))
 )]
 struct ApiDoc;
@@ -175,6 +183,7 @@ pub async fn run_server(pool: Arc<Pool>) {
         .route("/code", get(code))
         .route("/idl", get(idl))
         .route("/version", get(version))
+        .route("/supported_versions", get(supported_versions))
         .with_state(pool)
         .merge(SwaggerUi::new("/swagger").url("/api-docs/openapi.json", ApiDoc::openapi()));
 
