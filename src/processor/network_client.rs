@@ -1,11 +1,10 @@
-use anyhow::Result;
+use crate::db::Network;
+use anyhow::{bail, Result};
 use gsdk::{
     metadata::{runtime_types::gear_common::CodeMetadata, storage::GearProgramStorage},
     Api, Value,
 };
 use hex::FromHex;
-
-use crate::db::Network;
 
 pub struct Client {
     api: Api,
@@ -20,8 +19,9 @@ impl Client {
 
     pub async fn check_code_onchain(&self, code_id: String) -> Result<bool> {
         let code_id = <[u8; 32]>::from_hex(code_id);
+
         let Ok(code_id) = code_id else {
-            return Ok(false);
+            bail!("Invalid code ID");
         };
 
         let addr = Api::storage(

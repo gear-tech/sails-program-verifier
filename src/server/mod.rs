@@ -2,7 +2,7 @@ use crate::{
     common::Pool,
     consts::AVAILABLE_VERSIONS,
     db::{Code, Idl, Verification, VerificationStatus},
-    util::{check_docker_version, generate_id},
+    util::{check_docker_version, generate_id, validate_and_get_code_id},
 };
 use axum::{
     extract::{Query, State},
@@ -64,6 +64,8 @@ async fn verify(
         Project::Name(name) => (Some(name), None),
         Project::PathToCargoToml(path) => (None, Some(path)),
     };
+
+    let code_id = validate_and_get_code_id(&code_id)?;
 
     Verification::save(
         &mut pool.get().unwrap(),
@@ -132,7 +134,11 @@ async fn code(
 ) -> Result<Json<Code>, StatusCode> {
     let conn = &mut pool.get().unwrap();
 
-    if let Some(code) = Code::get(conn, &params.id) {
+    let Ok(code_id) = validate_and_get_code_id(&params.id) else {
+        return Err(StatusCode::BAD_REQUEST);
+    };
+
+    if let Some(code) = Code::get(conn, &code_id) {
         Ok(Json(code))
     } else {
         Err(StatusCode::NOT_FOUND)
@@ -148,7 +154,11 @@ async fn idl(
 ) -> Result<Json<Idl>, StatusCode> {
     let conn = &mut pool.get().unwrap();
 
-    if let Some(idl) = Idl::get(conn, &params.id) {
+    let Ok(code_id) = validate_and_get_code_id(&params.id) else {
+        return Err(StatusCode::BAD_REQUEST);
+    };
+
+    if let Some(idl) = Idl::get(conn, &code_id) {
         Ok(Json(idl))
     } else {
         Err(StatusCode::NOT_FOUND)
