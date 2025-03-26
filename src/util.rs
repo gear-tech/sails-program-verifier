@@ -35,3 +35,13 @@ pub fn check_docker_version(version: &str) -> Result<()> {
         )
     }
 }
+
+pub fn validate_and_get_code_id(code_id: &str) -> Result<String> {
+    let code_id = code_id.strip_prefix("0x").unwrap_or(code_id);
+
+    if code_id.len() != 64 {
+        bail!("Invalid code ID");
+    }
+
+    Ok(code_id.to_string())
+}

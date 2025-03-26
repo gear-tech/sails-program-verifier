@@ -83,7 +83,7 @@ impl Idl {
 #[derive(Queryable, Selectable, Insertable)]
 #[diesel(table_name = schema::verification)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Verification {
     pub id: String,
     pub repo_link: String,
