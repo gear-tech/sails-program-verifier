@@ -1,6 +1,6 @@
 # sails-program-verifier
 
-`sails-program-verifier` is a service for verifying programs and smart contracts written in [Sails](https://github.com/gear-tech/sails).
+`sails-program-verifier` is a service for verifying programs written in [Sails](https://github.com/gear-tech/sails).
 It ensures that a compiled program meets the required versions of Sails, Rust, and the operating system.
 
 ## How It Works
