@@ -1,19 +1,19 @@
 # sails-program-verifier
 
 `sails-program-verifier` is a service for verifying programs written in [Sails](https://github.com/gear-tech/sails).
-It ensures that a compiled contract meets the required versions of Sails, Rust, and the operating system.
+It ensures that a compiled program meets the required versions of Sails, Rust, and the operating system.
 
 ## How It Works
 
-To verify a contract, it must be compiled with specific versions of Sails, Rust, and other dependencies.
+To verify a program, it must be compiled with specific versions of Sails, Rust, and other dependencies.
 
-To ensure consistency, the repository includes Docker images that can be used for contract compilation.
+To ensure consistency, the repository includes Docker images that can be used for program compilation.
 
 The verification service itself relies on these images when processing verification requests.
 
 ## Compiling a Contract
 
-Developers can use the provided Docker images to compile their contracts with the correct environment. Here’s an example command:
+Developers can use the provided Docker images to compile their programs with the correct environment. Here’s an example command:
 
 ```sh
 docker run -v $(pwd):/app --entrypoint /bin/bash ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build --release'
@@ -79,7 +79,7 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 
 ### 4. Submit a Verification Request
 **Endpoint:** `POST /verify`
-**Description:** Submits a contract for verification.
+**Description:** Submits a program for verification.
 
 **Request Body:**
 ```json
