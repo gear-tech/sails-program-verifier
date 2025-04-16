@@ -1,4 +1,4 @@
-FROM ghcr.io/gear-tech/sails-program-builder:0.7.3
+FROM ghcr.io/gear-tech/sails-program-builder:0.8.0
 
 WORKDIR /
 

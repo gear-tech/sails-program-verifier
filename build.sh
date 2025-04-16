@@ -13,7 +13,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-MANIFEST_PATH="pumpum."
+MANIFEST_PATH=
 
 if [ -n "$PATH_TO_CARGO_TOML" ]; then
     MANIFEST_PATH=$PATH_TO_CARGO_TOML
