@@ -14,7 +14,7 @@ async-stream = "0.3.6"
 axum = "0.7.7"
 blake2 = "0.10.6"
 bollard = "0.18.1"
-diesel = { version = "2.2.4", features = ["postgres", "r2d2"] }
+diesel = { version = "2.2.9", features = ["postgres", "r2d2"] }
 dotenvy = "0.15"
 env_logger = "0.11.5"
 futures = "0.3.31"
