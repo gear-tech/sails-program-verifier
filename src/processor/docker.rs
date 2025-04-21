@@ -51,7 +51,7 @@ pub async fn remove_container(id: String) -> Result<()> {
 }
 
 pub async fn build_program(
-    id: &str,
+    verif_id: &str,
     project_path: &str,
     repo_url: &str,
     project_name: Option<String>,
@@ -62,7 +62,7 @@ pub async fn build_program(
     let docker = Docker::connect_with_local_defaults()?;
 
     let cc_options = CreateContainerOptions {
-        name: id,
+        name: verif_id,
         platform: None,
     };
 
@@ -99,13 +99,13 @@ pub async fn build_program(
         .await?
         .id;
 
-    log::info!("{}: container created", &id);
+    log::info!("{}: container created({})", &verif_id, &id);
 
     docker.start_container::<String>(&id, None).await?;
 
-    log::info!("{}: container started", &id);
+    log::info!("{}: container started({})", &verif_id, &id);
 
-    docker
+    let c_result = docker
         .wait_container(
             &id,
             Some(WaitContainerOptions {
@@ -115,7 +115,11 @@ pub async fn build_program(
         .try_collect::<Vec<_>>()
         .await?;
 
-    log::info!("{}: container finished", &id);
+    for r in c_result {
+        log::info!("{:?}", r.error, r.status_code);
+    }
+
+    log::info!("{}: container exited({})", &verif_id, &id);
 
     Ok(id)
 }
