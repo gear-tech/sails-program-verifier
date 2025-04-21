@@ -17,6 +17,8 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
 
     fs::create_dir_all(&project_path)?;
 
+    log::info!("{}: project dir created", &verif.id);
+
     let c_id = build_program(
         &verif.id,
         project_path.to_str().unwrap(),
@@ -28,7 +30,11 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
     )
     .await?;
 
+    log::info!("{}: program is built", &verif.id);
+
     remove_container(c_id).await?;
+
+    log::info!("{}: container is removed", &verif.id);
 
     let built_files = fs::read_dir(&project_path)?;
 
@@ -48,6 +54,8 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         bail!("Failed to build wasm.");
     };
 
+    log::info!("{}: wasm - {}", &verif.id, &wasm_path);
+
     let code = fs::read(&wasm_path)?;
     let code_id = generate_code_id(&code);
     let code_filename = wasm_path.file_name().unwrap().to_str().unwrap();
@@ -61,7 +69,11 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         None
     };
 
+    log::info!("{}: idl - {}", &verif.id, &idl);
+
     fs::remove_dir_all(&project_path)?;
+
+    log::info!("{}: project dir is cleaned", &verif.id);
 
     Ok(BuildArtifacts {
         code_id,

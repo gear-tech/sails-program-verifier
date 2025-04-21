@@ -99,7 +99,11 @@ pub async fn build_program(
         .await?
         .id;
 
+    log::info!("{}: container created", &id);
+
     docker.start_container::<String>(&id, None).await?;
+
+    log::info!("{}: container started", &id);
 
     docker
         .wait_container(
@@ -110,6 +114,8 @@ pub async fn build_program(
         )
         .try_collect::<Vec<_>>()
         .await?;
+
+    log::info!("{}: container finished", &id);
 
     Ok(id)
 }
