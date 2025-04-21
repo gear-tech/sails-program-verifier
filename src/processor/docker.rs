@@ -116,7 +116,12 @@ pub async fn build_program(
         .await?;
 
     for r in c_result {
-        log::info!("{:?}", r.error, r.status_code);
+        log::info!(
+            "{}: error: {:?} || status code: {}",
+            &verif_id,
+            r.error,
+            r.status_code
+        );
     }
 
     log::info!("{}: container exited({})", &verif_id, &id);
