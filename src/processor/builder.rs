@@ -32,9 +32,8 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
 
     log::info!("{}: program is built", &verif.id);
 
-    remove_container(c_id).await?;
-
-    log::info!("{}: container is removed", &verif.id);
+    // remove_container(c_id).await?;
+    // log::info!("{}: container is removed", &verif.id);
 
     let built_files = fs::read_dir(&project_path)?;
 
