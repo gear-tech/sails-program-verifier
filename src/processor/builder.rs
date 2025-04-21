@@ -54,7 +54,7 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         bail!("Failed to build wasm.");
     };
 
-    log::info!("{}: wasm - {}", &verif.id, &wasm_path);
+    log::info!("{}: wasm - {:?}", &verif.id, &wasm_path);
 
     let code = fs::read(&wasm_path)?;
     let code_id = generate_code_id(&code);
@@ -69,7 +69,7 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         None
     };
 
-    log::info!("{}: idl - {}", &verif.id, &idl);
+    log::info!("{}: idl - {:?}", &verif.id, &idl);
 
     fs::remove_dir_all(&project_path)?;
 
