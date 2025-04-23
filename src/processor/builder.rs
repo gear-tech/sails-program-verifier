@@ -17,16 +17,7 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
 
     fs::create_dir_all(&project_path)?;
 
-    let c_id = build_program(
-        &verif.id,
-        project_path.to_str().unwrap(),
-        &verif.repo_link,
-        verif.project_name.clone(),
-        verif.path_to_cargo_toml.clone(),
-        verif.build_idl,
-        verif.version.as_str(),
-    )
-    .await?;
+    let c_id = build_program(&verif, project_path.to_str().unwrap()).await?;
 
     remove_container(c_id).await?;
 

@@ -10,11 +10,17 @@ echo "Clonning repository $REPO_URL"
 git clone --depth 1 $REPO_URL .
 
 if [ $? -ne 0 ]; then
-    echo "Failed to clone the repository $REPO_URL"
+    echo "Error: Failed to clone the repository $REPO_URL" >&2
     exit 1
 fi
 
 cd $BASE_PATH
+
+if [ ! -f "Cargo.toml" ]; then
+    echo "Error: No \"Cargo.toml\" file found in the specified path ($BASE_PATH)." >&2
+    exit 1
+fi
+
 
 MANIFEST_PATH=
 

@@ -22,19 +22,27 @@ mod error;
 enum Project {
     #[default]
     Root,
+    /// Name of the package to be built.
     Name(String),
+    /// Path to the directory with the package's Cargo.toml
     PathToCargoToml(String),
 }
 
 #[derive(Deserialize, Debug, ToSchema)]
 struct VerifyRequest {
+    /// Link to the repository containing the code to be verified.
     pub repo_link: String,
+    /// Version of the Docker image to use for verification.
     pub version: String,
     /// Path to the directory with the root Cargo.toml (default: .)
     pub base_path: Option<String>,
+    /// Project to verify (default: root)
     pub project: Option<Project>,
+    /// Network where the code of the program is deployed
     pub network: String,
+    /// ID of the deployed code
     pub code_id: String,
+    /// Whether to build the IDL (default: false)
     pub build_idl: Option<bool>,
 }
 

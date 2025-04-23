@@ -1,6 +1,7 @@
-use crate::consts::IMAGE_NAME;
+use crate::{consts::IMAGE_NAME, db::Verification};
 use anyhow::Result;
 use bollard::{
+    auth::DockerCredentials,
     container::{
         Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
         WaitContainerOptions,
@@ -11,13 +12,13 @@ use bollard::{
 };
 use futures::TryStreamExt;
 use std::collections::HashMap;
+use std::env;
 use tokio_stream::StreamExt;
 
 pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
 
     let filters: HashMap<String, Vec<String>> = HashMap::new();
-
     let containers = docker
         .list_containers(Some(ListContainersOptions {
             all: true,
@@ -50,19 +51,11 @@ pub async fn remove_container(id: String) -> Result<()> {
     Ok(())
 }
 
-pub async fn build_program(
-    id: &str,
-    project_path: &str,
-    repo_url: &str,
-    project_name: Option<String>,
-    path_to_cargo_toml: Option<String>,
-    build_idl: bool,
-    version: &str,
-) -> Result<String> {
+pub async fn build_program(verif: &Verification, project_path: &str) -> Result<String> {
     let docker = Docker::connect_with_local_defaults()?;
 
     let cc_options = CreateContainerOptions {
-        name: id,
+        name: &verif.id,
         platform: None,
     };
 
@@ -70,18 +63,31 @@ pub async fn build_program(
     let mut volumes: HashMap<&str, HashMap<(), ()>> = HashMap::default();
     volumes.insert(&mount, HashMap::default());
 
-    let repo_url_env = format!("REPO_URL={}", repo_url);
-    let project_name_env = format!("PROJECT_NAME={}", project_name.unwrap_or_default());
+    let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
+    let project_name_env = format!(
+        "PROJECT_NAME={}",
+        verif.project_name.clone().unwrap_or_default()
+    );
     let path_to_cargo_toml_env = format!(
         "PATH_TO_CARGO_TOML={}",
-        path_to_cargo_toml.unwrap_or_default()
+        &verif.path_to_cargo_toml.clone().unwrap_or_default()
     );
-    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &path_to_cargo_toml_env];
-    if build_idl {
+    let base_path_env = format!(
+        "BASE_PATH={}",
+        &verif.base_path.clone().unwrap_or(".".to_string())
+    );
+    let mut env: Vec<&str> = vec![
+        &repo_url_env,
+        &project_name_env,
+        &path_to_cargo_toml_env,
+        &base_path_env,
+    ];
+
+    if verif.build_idl {
         env.push("BUILD_IDL=true");
     }
 
-    let image = format!("{}:{}", IMAGE_NAME, version);
+    let image = format!("{}:{}", IMAGE_NAME, &verif.version);
 
     let cc_config = Config {
         image: Some(image.as_str()),
@@ -146,12 +152,19 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
 
     log::info!("Pulling image w/ version {}", version);
 
+    let auth_config = DockerCredentials {
+        username: env::var("DOCKER_USERNAME").ok(),
+        password: env::var("DOCKER_ACCESS_TOKEN").ok(),
+        serveraddress: Some("ghcr.io".to_string()),
+        ..Default::default()
+    };
+
     let options = CreateImageOptions {
         from_image: format!("{}:{}", IMAGE_NAME, version),
         ..Default::default()
     };
 
-    let mut create_stream = docker.create_image(Some(options), None, None);
+    let mut create_stream = docker.create_image(Some(options), None, Some(auth_config));
 
     while let Some(msg) = create_stream.next().await {
         if let Err(msg) = msg {
