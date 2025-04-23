@@ -2,6 +2,7 @@ REPO_URL=$REPO_URL
 PROJECT_NAME=$PROJECT_NAME
 BUILD_IDL=$BUILD_IDL
 PATH_TO_CARGO_TOML=$PATH_TO_CARGO_TOML
+BASE_PATH=$BASE_PATH
 
 # Clone the repo exit on error
 echo "Clonning repository $REPO_URL"
@@ -12,6 +13,8 @@ if [ $? -ne 0 ]; then
     echo "Failed to clone the repository $REPO_URL"
     exit 1
 fi
+
+cd $BASE_PATH
 
 MANIFEST_PATH=
 
@@ -36,7 +39,7 @@ if [ "$BUILD_IDL" = "true" ]; then
     ls -al target/*.idl
 fi
 
-cp target/wasm32-unknown-unknown/release/*.wasm /mnt/build/
+cp target/wasm32-gear/release/*.wasm /mnt/build/
 cp target/*.idl /mnt/build/
 
 ls -al /mnt/build

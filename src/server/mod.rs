@@ -30,6 +30,8 @@ enum Project {
 struct VerifyRequest {
     pub repo_link: String,
     pub version: String,
+    /// Path to the directory with the root Cargo.toml (default: .)
+    pub base_path: Option<String>,
     pub project: Option<Project>,
     pub network: String,
     pub code_id: String,
@@ -50,6 +52,7 @@ async fn verify(
         repo_link,
         code_id,
         project,
+        base_path,
         version,
         network,
         build_idl,
@@ -75,6 +78,7 @@ async fn verify(
             code_id,
             project_name,
             path_to_cargo_toml,
+            base_path,
             version,
             status: VerificationStatus::Pending,
             network: network.try_into()?,

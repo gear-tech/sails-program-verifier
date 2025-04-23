@@ -37,6 +37,7 @@ diesel::table! {
         code_id -> Varchar,
         project_name -> Nullable<Varchar>,
         path_to_cargo_toml -> Nullable<Varchar>,
+        base_path -> Nullable<Varchar>,
         build_idl -> Bool,
         version -> Varchar,
         status -> Verificationstatus,
@@ -46,4 +47,4 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(code, idl, verification,);
+diesel::allow_tables_to_appear_in_same_query!(code, idl, verification);
