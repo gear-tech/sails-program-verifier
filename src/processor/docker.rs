@@ -98,9 +98,13 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         .await?
         .id;
 
+    log::info!("{}: container created({})", &verif_id, &id);
+
     docker.start_container::<String>(&id, None).await?;
 
-    docker
+    log::info!("{}: container started({})", &verif_id, &id);
+
+    let c_result = docker
         .wait_container(
             &id,
             Some(WaitContainerOptions {
@@ -109,6 +113,17 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         )
         .try_collect::<Vec<_>>()
         .await?;
+
+    for r in c_result {
+        log::info!(
+            "{}: error: {:?} || status code: {}",
+            &verif_id,
+            r.error,
+            r.status_code
+        );
+    }
+
+    log::info!("{}: container exited({})", &verif_id, &id);
 
     Ok(id)
 }

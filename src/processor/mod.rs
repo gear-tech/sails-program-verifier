@@ -107,13 +107,13 @@ fn process_verif(
             let verif_clone = verif.clone();
 
             if let Err(err) = start_verification(pool_clone.clone(), verif_clone.clone()).await {
-                log::warn!("ID: {}. Err: {:?}", &id, err);
+                log::warn!("{}: Err: {:?}", &id, err);
             } else if let Err(err) =
                 check_code_onchain(clients.clone(), pool_clone.clone(), verif_clone.clone()).await
             {
-                log::error!("ID: {}. Err: {:?}", &id, err);
+                log::error!("{}: Err: {:?}", &id, err);
             } else if let Err(err) = build_and_verify(pool_clone.clone(), verif.clone()).await {
-                log::error!("ID: {}. Err: {:?}", &id, err);
+                log::error!("{}: Err: {:?}", &id, err);
             }
 
             in_progress.fetch_sub(1, Ordering::Relaxed);
@@ -177,9 +177,8 @@ async fn check_code_onchain(
 }
 
 async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
-    log::info!("ID: {}. Building project", &verif.id);
+    log::info!("{}: building project", &verif.id);
     let build_res = build_code(verif.clone()).await;
-    log::info!("ID: {}. Code built", &verif.id);
 
     tokio::task::spawn_blocking(move || {
         let mut conn = pool.get().expect("Failed to get connection");
@@ -194,6 +193,8 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
             )?;
             bail!(err_msg);
         }
+
+        log::info!("{}: code built", &verif.id);
 
         let artifacts = build_res.unwrap();
 
@@ -215,7 +216,7 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
             if let Some(idl) = artifacts.idl {
                 idl_hash = Some(hash_idl(&idl));
                 Idl::save(&mut conn, idl_hash.as_ref().unwrap(), idl)?;
-                log::info!("ID: {}. Idl saved", &verif.id);
+                log::info!("{}: idl saved", &verif.id);
             }
             Code::new(
                 &mut conn,
@@ -224,9 +225,9 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
                 artifacts.name,
                 idl_hash,
             )?;
-            log::info!("ID: {}. Code meta saved", &verif.id);
+            log::info!("{}: code meta saved", &verif.id);
             Verification::update(&mut conn, &verif.id, VerificationStatus::Verified, None)?;
-            log::info!("ID: {}. Verification completed", &verif.id);
+            log::info!("{}: verification completed", &verif.id);
         }
 
         Ok(())
