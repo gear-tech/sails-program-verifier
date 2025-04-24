@@ -24,8 +24,8 @@ enum Project {
     Root,
     /// Name of the package to be built.
     Name(String),
-    /// Path to the directory with the package's Cargo.toml
-    PathToCargoToml(String),
+    /// Manifest path of the package
+    ManifestPath(String),
 }
 
 #[derive(Deserialize, Debug, ToSchema)]
@@ -34,8 +34,6 @@ struct VerifyRequest {
     pub repo_link: String,
     /// Version of the Docker image to use for verification.
     pub version: String,
-    /// Path to the directory with the root Cargo.toml (default: .)
-    pub base_path: Option<String>,
     /// Project to verify (default: root)
     pub project: Option<Project>,
     /// Network where the code of the program is deployed
@@ -60,7 +58,6 @@ async fn verify(
         repo_link,
         code_id,
         project,
-        base_path,
         version,
         network,
         build_idl,
@@ -70,10 +67,10 @@ async fn verify(
 
     check_docker_version(&version)?;
 
-    let (project_name, path_to_cargo_toml) = match project.unwrap_or_default() {
+    let (project_name, manifest_path) = match project.unwrap_or_default() {
         Project::Root => (None, None),
         Project::Name(name) => (Some(name), None),
-        Project::PathToCargoToml(path) => (None, Some(path)),
+        Project::ManifestPath(path) => (None, Some(path)),
     };
 
     let code_id = validate_and_get_code_id(&code_id)?;
@@ -85,8 +82,7 @@ async fn verify(
             repo_link,
             code_id,
             project_name,
-            path_to_cargo_toml,
-            base_path,
+            manifest_path,
             version,
             status: VerificationStatus::Pending,
             network: network.try_into()?,

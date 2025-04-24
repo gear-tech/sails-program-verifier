@@ -19,6 +19,7 @@ pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
 
     let filters: HashMap<String, Vec<String>> = HashMap::new();
+
     let containers = docker
         .list_containers(Some(ListContainersOptions {
             all: true,
@@ -59,7 +60,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         platform: None,
     };
 
-    let mount = format!("{}:/mnt/build", project_path);
+    let mount = format!("{}:/mnt/target", project_path);
     let mut volumes: HashMap<&str, HashMap<(), ()>> = HashMap::default();
     volumes.insert(&mount, HashMap::default());
 
@@ -68,20 +69,12 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         "PROJECT_NAME={}",
         verif.project_name.clone().unwrap_or_default()
     );
-    let path_to_cargo_toml_env = format!(
-        "PATH_TO_CARGO_TOML={}",
-        &verif.path_to_cargo_toml.clone().unwrap_or_default()
+    let manifest_path_env = format!(
+        "MANIFEST_PATH={}",
+        &verif.manifest_path.clone().unwrap_or_default()
     );
-    let base_path_env = format!(
-        "BASE_PATH={}",
-        &verif.base_path.clone().unwrap_or(".".to_string())
-    );
-    let mut env: Vec<&str> = vec![
-        &repo_url_env,
-        &project_name_env,
-        &path_to_cargo_toml_env,
-        &base_path_env,
-    ];
+
+    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &manifest_path_env];
 
     if verif.build_idl {
         env.push("BUILD_IDL=true");
@@ -168,7 +161,7 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
 
     while let Some(msg) = create_stream.next().await {
         if let Err(msg) = msg {
-            log::error!("Failed to pull image {}. {msg:?}", version);
+            log::error!("Failed to pull image {version}. {msg:?}");
         }
     }
 
