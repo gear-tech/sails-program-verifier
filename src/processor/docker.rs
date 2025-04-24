@@ -44,10 +44,12 @@ pub async fn prune_containers() -> Result<()> {
     Ok(())
 }
 
-pub async fn remove_container(id: String) -> Result<()> {
+pub async fn remove_container(id: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
 
     docker.remove_container(&id, None).await?;
+
+    log::info!("{id}: container removed");
 
     Ok(())
 }
@@ -98,11 +100,11 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         .await?
         .id;
 
-    log::info!("{}: container created({})", &verif_id, &id);
+    log::info!("{}: container created({})", &verif.id, &id[0..12]);
 
     docker.start_container::<String>(&id, None).await?;
 
-    log::info!("{}: container started({})", &verif_id, &id);
+    log::info!("{}: container started({})", &verif.id, &id[0..12]);
 
     let c_result = docker
         .wait_container(
@@ -117,13 +119,13 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     for r in c_result {
         log::info!(
             "{}: error: {:?} || status code: {}",
-            &verif_id,
+            &verif.id,
             r.error,
             r.status_code
         );
     }
 
-    log::info!("{}: container exited({})", &verif_id, &id);
+    log::info!("{}: container exited({})", &verif.id, &id[0..12]);
 
     Ok(id)
 }
@@ -142,9 +144,10 @@ async fn does_image_exist(version: &str, docker: &Docker) -> Result<bool> {
         if tags.is_empty() {
             continue;
         }
-        let tag = tags[0].clone();
-        if tag == format!("{}:{}", IMAGE_NAME, version) {
-            return Ok(true);
+        for tag in tags {
+            if tag == format!("{}:{}", IMAGE_NAME, version) {
+                return Ok(true);
+            }
         }
     }
 

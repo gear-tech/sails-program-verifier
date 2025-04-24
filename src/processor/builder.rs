@@ -1,6 +1,6 @@
 use super::docker::{build_program, remove_container};
 use crate::{consts::PATH_TO_BUILDS, db::Verification, util::generate_code_id};
-use anyhow::bail;
+use anyhow::{bail, Result};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -12,20 +12,20 @@ pub struct BuildArtifacts {
     pub name: String,
 }
 
-pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
-    let project_path = Path::new(PATH_TO_BUILDS).join(&verif.id);
+fn get_project_path(id: &str) -> PathBuf {
+    Path::new(PATH_TO_BUILDS).join(id)
+}
 
-    fs::create_dir_all(&project_path)?;
+pub async fn build_project(verif: Verification) -> Result<BuildArtifacts> {
+    let proj_path = get_project_path(&verif.id);
 
+    fs::create_dir_all(&proj_path)?;
     log::info!("{}: project dir created", &verif.id);
-    let c_id = build_program(&verif, project_path.to_str().unwrap()).await?;
 
-    log::info!("{}: program is built", &verif.id);
+    build_program(&verif, proj_path.to_str().unwrap()).await?;
+    log::info!("{}: program built", &verif.id);
 
-    // remove_container(c_id).await?;
-    // log::info!("{}: container is removed", &verif.id);
-
-    let built_files = fs::read_dir(&project_path)?;
+    let built_files = fs::read_dir(&proj_path)?;
 
     let mut wasm_path: Option<PathBuf> = None;
     let mut idl_path: Option<PathBuf> = None;
@@ -53,20 +53,24 @@ pub async fn build_code(verif: Verification) -> anyhow::Result<BuildArtifacts> {
         let Some(idl_path) = idl_path else {
             bail!("Failed to build idl file.");
         };
+        log::info!("{}: idl - {:?}", &verif.id, &idl_path);
         fs::read_to_string(&idl_path).ok()
     } else {
         None
     };
-
-    log::info!("{}: idl - {:?}", &verif.id, &idl);
-
-    fs::remove_dir_all(&project_path)?;
-
-    log::info!("{}: project dir is cleaned", &verif.id);
 
     Ok(BuildArtifacts {
         code_id,
         idl,
         name: code_filename[..(code_filename.len() - ".opt.wasm".len())].to_string(),
     })
+}
+
+pub async fn cleanup(verif_id: &str) -> Result<()> {
+    fs::remove_dir_all(get_project_path(verif_id))?;
+    log::info!("{verif_id}: project dir cleaned");
+
+    remove_container(verif_id).await?;
+
+    Ok(())
 }

@@ -5,7 +5,7 @@ use crate::{
     Client,
 };
 use anyhow::{anyhow, bail, Result};
-use builder::build_code;
+use builder::{build_project, cleanup};
 use futures::{Stream, StreamExt};
 use network_client::AppClients;
 use std::{
@@ -107,13 +107,13 @@ fn process_verif(
             let verif_clone = verif.clone();
 
             if let Err(err) = start_verification(pool_clone.clone(), verif_clone.clone()).await {
-                log::warn!("{}: Err: {:?}", &id, err);
+                log::warn!("{}: {:?}", &id, err);
             } else if let Err(err) =
                 check_code_onchain(clients.clone(), pool_clone.clone(), verif_clone.clone()).await
             {
-                log::error!("{}: Err: {:?}", &id, err);
+                log::error!("{}: {:?}", &id, err);
             } else if let Err(err) = build_and_verify(pool_clone.clone(), verif.clone()).await {
-                log::error!("{}: Err: {:?}", &id, err);
+                log::error!("{}: {:?}", &id, err);
             }
 
             in_progress.fetch_sub(1, Ordering::Relaxed);
@@ -178,7 +178,9 @@ async fn check_code_onchain(
 
 async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
     log::info!("{}: building project", &verif.id);
-    let build_res = build_code(verif.clone()).await;
+    let build_res = build_project(verif.clone()).await;
+
+    cleanup(&verif.id).await?;
 
     tokio::task::spawn_blocking(move || {
         let mut conn = pool.get().expect("Failed to get connection");
@@ -194,8 +196,6 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
             bail!(err_msg);
         }
 
-        log::info!("{}: code built", &verif.id);
-
         let artifacts = build_res.unwrap();
 
         if artifacts.code_id != verif.code_id {
@@ -207,8 +207,8 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
             )?;
             bail!(
                 "Code ID mismatch. Provided: {}. Calculated: {}",
+                &verif.code_id,
                 &artifacts.code_id,
-                &verif.code_id
             );
         } else {
             let mut idl_hash: Option<String> = None;

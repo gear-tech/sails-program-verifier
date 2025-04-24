@@ -11,8 +11,10 @@ pub fn generate_id() -> String {
         .collect::<String>()
 }
 
+type Blake2b256 = Blake2b<U32>;
+
 pub fn generate_code_id(code: &[u8]) -> String {
-    let mut hasher = Blake2b::<U32>::new();
+    let mut hasher = Blake2b256::new();
 
     hasher.update(code);
     hex::encode(hasher.finalize().as_slice())
