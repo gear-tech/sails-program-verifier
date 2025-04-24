@@ -22,17 +22,25 @@ mod error;
 enum Project {
     #[default]
     Root,
+    /// Name of the package to be built.
     Name(String),
-    PathToCargoToml(String),
+    /// Manifest path of the package
+    ManifestPath(String),
 }
 
 #[derive(Deserialize, Debug, ToSchema)]
 struct VerifyRequest {
+    /// Link to the repository containing the code to be verified.
     pub repo_link: String,
+    /// Version of the Docker image to use for verification.
     pub version: String,
+    /// Project to verify (default: root)
     pub project: Option<Project>,
+    /// Network where the code of the program is deployed
     pub network: String,
+    /// ID of the deployed code
     pub code_id: String,
+    /// Whether to build the IDL (default: false)
     pub build_idl: Option<bool>,
 }
 
@@ -59,10 +67,10 @@ async fn verify(
 
     check_docker_version(&version)?;
 
-    let (project_name, path_to_cargo_toml) = match project.unwrap_or_default() {
+    let (project_name, manifest_path) = match project.unwrap_or_default() {
         Project::Root => (None, None),
         Project::Name(name) => (Some(name), None),
-        Project::PathToCargoToml(path) => (None, Some(path)),
+        Project::ManifestPath(path) => (None, Some(path)),
     };
 
     let code_id = validate_and_get_code_id(&code_id)?;
@@ -74,7 +82,7 @@ async fn verify(
             repo_link,
             code_id,
             project_name,
-            path_to_cargo_toml,
+            manifest_path,
             version,
             status: VerificationStatus::Pending,
             network: network.try_into()?,
