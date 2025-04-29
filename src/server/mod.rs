@@ -3,10 +3,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use routes::{code, idl, verify, version};
 use std::sync::Arc;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use routes::{verify, code, idl, version};
 
 pub mod error;
 mod routes;
