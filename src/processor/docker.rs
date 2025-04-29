@@ -47,7 +47,7 @@ pub async fn prune_containers() -> Result<()> {
 pub async fn remove_container(id: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
 
-    docker.remove_container(&id, None).await?;
+    docker.remove_container(id, None).await?;
 
     log::info!("{id}: container removed");
 

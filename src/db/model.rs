@@ -1,4 +1,4 @@
-use super::schema::{self, verification::dsl as verif_dsl};
+use super::schema::{self, code::dsl as code_dsl, verification::dsl as verif_dsl};
 use diesel::{
     deserialize::{FromSql, FromSqlRow},
     expression::AsExpression,
@@ -43,7 +43,16 @@ impl Code {
     }
 
     pub fn get(conn: &mut PgConnection, id: &str) -> Option<Code> {
-        schema::code::dsl::code.find(id).first(conn).ok()
+        code_dsl::code.find(id).first(conn).ok()
+    }
+
+    pub fn get_many(
+        conn: &mut PgConnection,
+        ids: &[String],
+    ) -> Result<Vec<Code>, diesel::result::Error> {
+        code_dsl::code
+            .filter(code_dsl::id.eq_any(ids))
+            .load::<Code>(conn)
     }
 }
 
