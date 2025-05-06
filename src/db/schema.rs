@@ -36,7 +36,7 @@ diesel::table! {
         repo_link -> Varchar,
         code_id -> Varchar,
         project_name -> Nullable<Varchar>,
-        path_to_cargo_toml -> Nullable<Varchar>,
+        manifest_path -> Nullable<Varchar>,
         build_idl -> Bool,
         version -> Varchar,
         status -> Verificationstatus,

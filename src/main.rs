@@ -1,3 +1,4 @@
+use dotenvy::dotenv;
 use sails_program_verifier::{
     consts::AVAILABLE_VERSIONS,
     db::{get_connection_pool, Verification},
@@ -7,6 +8,7 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    dotenv().ok();
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     log::info!("Prunning old containers");

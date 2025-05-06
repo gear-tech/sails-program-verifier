@@ -1,6 +1,7 @@
-use crate::consts::IMAGE_NAME;
+use crate::{consts::IMAGE_NAME, db::Verification};
 use anyhow::Result;
 use bollard::{
+    auth::DockerCredentials,
     container::{
         Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
         WaitContainerOptions,
@@ -11,6 +12,7 @@ use bollard::{
 };
 use futures::TryStreamExt;
 use std::collections::HashMap;
+use std::env;
 use tokio_stream::StreamExt;
 
 pub async fn prune_containers() -> Result<()> {
@@ -42,46 +44,45 @@ pub async fn prune_containers() -> Result<()> {
     Ok(())
 }
 
-pub async fn remove_container(id: String) -> Result<()> {
+pub async fn remove_container(id: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
 
-    docker.remove_container(&id, None).await?;
+    docker.remove_container(id, None).await?;
+
+    log::info!("{id}: container removed");
 
     Ok(())
 }
 
-pub async fn build_program(
-    id: &str,
-    project_path: &str,
-    repo_url: &str,
-    project_name: Option<String>,
-    path_to_cargo_toml: Option<String>,
-    build_idl: bool,
-    version: &str,
-) -> Result<String> {
+pub async fn build_program(verif: &Verification, project_path: &str) -> Result<String> {
     let docker = Docker::connect_with_local_defaults()?;
 
     let cc_options = CreateContainerOptions {
-        name: id,
+        name: &verif.id,
         platform: None,
     };
 
-    let mount = format!("{}:/mnt/build", project_path);
+    let mount = format!("{}:/mnt/target", project_path);
     let mut volumes: HashMap<&str, HashMap<(), ()>> = HashMap::default();
     volumes.insert(&mount, HashMap::default());
 
-    let repo_url_env = format!("REPO_URL={}", repo_url);
-    let project_name_env = format!("PROJECT_NAME={}", project_name.unwrap_or_default());
-    let path_to_cargo_toml_env = format!(
-        "PATH_TO_CARGO_TOML={}",
-        path_to_cargo_toml.unwrap_or_default()
+    let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
+    let project_name_env = format!(
+        "PROJECT_NAME={}",
+        verif.project_name.clone().unwrap_or_default()
     );
-    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &path_to_cargo_toml_env];
-    if build_idl {
+    let manifest_path_env = format!(
+        "MANIFEST_PATH={}",
+        &verif.manifest_path.clone().unwrap_or_default()
+    );
+
+    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &manifest_path_env];
+
+    if verif.build_idl {
         env.push("BUILD_IDL=true");
     }
 
-    let image = format!("{}:{}", IMAGE_NAME, version);
+    let image = format!("{}:{}", IMAGE_NAME, &verif.version);
 
     let cc_config = Config {
         image: Some(image.as_str()),
@@ -99,9 +100,13 @@ pub async fn build_program(
         .await?
         .id;
 
+    log::info!("{}: container created({})", &verif.id, &id[0..12]);
+
     docker.start_container::<String>(&id, None).await?;
 
-    docker
+    log::info!("{}: container started({})", &verif.id, &id[0..12]);
+
+    let c_result = docker
         .wait_container(
             &id,
             Some(WaitContainerOptions {
@@ -110,6 +115,17 @@ pub async fn build_program(
         )
         .try_collect::<Vec<_>>()
         .await?;
+
+    for r in c_result {
+        log::info!(
+            "{}: error: {:?} || status code: {}",
+            &verif.id,
+            r.error,
+            r.status_code
+        );
+    }
+
+    log::info!("{}: container exited({})", &verif.id, &id[0..12]);
 
     Ok(id)
 }
@@ -128,9 +144,10 @@ async fn does_image_exist(version: &str, docker: &Docker) -> Result<bool> {
         if tags.is_empty() {
             continue;
         }
-        let tag = tags[0].clone();
-        if tag == format!("{}:{}", IMAGE_NAME, version) {
-            return Ok(true);
+        for tag in tags {
+            if tag == format!("{}:{}", IMAGE_NAME, version) {
+                return Ok(true);
+            }
         }
     }
 
@@ -146,16 +163,23 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
 
     log::info!("Pulling image w/ version {}", version);
 
+    let auth_config = DockerCredentials {
+        username: env::var("DOCKER_USERNAME").ok(),
+        password: env::var("DOCKER_ACCESS_TOKEN").ok(),
+        serveraddress: Some("ghcr.io".to_string()),
+        ..Default::default()
+    };
+
     let options = CreateImageOptions {
         from_image: format!("{}:{}", IMAGE_NAME, version),
         ..Default::default()
     };
 
-    let mut create_stream = docker.create_image(Some(options), None, None);
+    let mut create_stream = docker.create_image(Some(options), None, Some(auth_config));
 
     while let Some(msg) = create_stream.next().await {
         if let Err(msg) = msg {
-            log::error!("Failed to pull image {}. {msg:?}", version);
+            log::error!("Failed to pull image {version}. {msg:?}");
         }
     }
 

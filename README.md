@@ -69,8 +69,6 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 **Response:**
 ```json
 [
-  "0.7.1",
-  "0.7.2",
   "0.8.0"
 ]
 ```
@@ -85,9 +83,9 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 ```json
 {
   "repo_link": "https://github.com/user/repo",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "network": "testnet",
-  "code_id": "12345",
+  "code_id": "0x12345",
   "build_idl": true
 }
 ```
