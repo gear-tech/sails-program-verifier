@@ -1,0 +1,6 @@
+-- This file should undo anything in `up.sql`
+DROP TABLE IF EXISTS "idl";
+DROP TABLE IF EXISTS "code";
+DROP TABLE IF EXISTS "verification";
+DROP TYPE IF EXISTS VERIFICATIONSTATUS;
+DROP TYPE IF EXISTS NETWORK;

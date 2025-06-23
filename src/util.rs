@@ -11,8 +11,10 @@ pub fn generate_id() -> String {
         .collect::<String>()
 }
 
+type Blake2b256 = Blake2b<U32>;
+
 pub fn generate_code_id(code: &[u8]) -> String {
-    let mut hasher = Blake2b::<U32>::new();
+    let mut hasher = Blake2b256::new();
 
     hasher.update(code);
     hex::encode(hasher.finalize().as_slice())
@@ -37,11 +39,15 @@ pub fn check_docker_version(version: &str) -> Result<()> {
 }
 
 pub fn validate_and_get_code_id(code_id: &str) -> Result<String> {
-    let code_id = code_id.strip_prefix("0x").unwrap_or(code_id);
+    let code_id = get_unprefixed_code_id(code_id).unwrap_or(code_id);
 
     if code_id.len() != 64 {
         bail!("Invalid code ID");
     }
 
     Ok(code_id.to_string())
+}
+
+pub fn get_unprefixed_code_id(code_id: &str) -> Option<&str> {
+    code_id.strip_prefix("0x")
 }
