@@ -9,7 +9,7 @@ repository = "https://github.com/gear-tech/sails-program-verifier"
 description = "Service for verifying Sails programs"
 
 [dependencies]
-anyhow = "1.0.91"
+anyhow = "1.0.98"
 async-stream = "0.3.6"
 axum = "0.7.7"
 blake2 = "0.10.6"
