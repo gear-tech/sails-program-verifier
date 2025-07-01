@@ -21,6 +21,31 @@ docker run -v $(pwd):/app --entrypoint /bin/bash ghcr.io/gear-tech/sails-program
 
 Check available versions [here](https://github.com/gear-tech/sails-program-verifier/pkgs/container/sails-program-builder)
 
+### Troubleshooting Docker Access Issues
+
+If you encounter a `403 Forbidden` error when pulling the Docker image, particularly on Mac with Silicon chips, you need to authenticate with GitHub Container Registry:
+
+1. Create a [personal access token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in GitHub:
+   - Go to GitHub → Settings → Developer settings → Personal access tokens → Generate new token
+   - Select the `read:packages` scope
+   - Generate and copy your token
+
+2. Log in to GitHub Container Registry using your token:
+   ```sh
+   echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+   ```
+   Or:
+   ```sh
+   docker login ghcr.io -u YOUR_GITHUB_USERNAME -p YOUR_GITHUB_TOKEN
+   ```
+
+3. Try pulling the image again:
+   ```sh
+   docker pull ghcr.io/gear-tech/sails-program-builder:<version>
+   ```
+
+After successful authentication, you can run the Docker command from the previous section.
+
 ## API Documentation
 
 The `sails-program-verifier` service provides a REST API for verifying Sails programs. Below are the available endpoints.
