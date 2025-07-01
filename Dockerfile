@@ -7,6 +7,6 @@ RUN rustup target add wasm32v1-none
 
 RUN wget -c https://github.com/WebAssembly/binaryen/releases/download/version_119/binaryen-version_119-x86_64-linux.tar.gz -O - | tar -xz -C .
 RUN cp binaryen-version_119/bin/wasm-opt /usr/bin/
-RUN cargo install sails-cli@0.8.0
+RUN cargo install sails-cli@0.8.1
 
 WORKDIR /app
