@@ -1,5 +1,7 @@
-/target
+target/
 /tmp
+tests/Cargo.lock
 
 .DS_Store
 .env
+.binpath

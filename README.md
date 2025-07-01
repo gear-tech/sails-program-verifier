@@ -94,7 +94,8 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 **Response:**
 ```json
 [
-  "0.8.0"
+  "0.8.0",
+  "0.8.1"
 ]
 ```
 

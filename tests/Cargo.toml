@@ -1,0 +1,9 @@
+[package]
+name = "ping-pong"
+edition = "2021"
+
+[build-dependencies]
+sails-rs = { version = "0.8.1", features = ["wasm-builder"] }
+
+[dependencies]
+sails-rs = { version = "0.8.1" }
