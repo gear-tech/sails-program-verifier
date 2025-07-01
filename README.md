@@ -25,7 +25,7 @@ Check available versions [here](https://github.com/gear-tech/sails-program-verif
 
 If you encounter a `403 Forbidden` error when pulling the Docker image, particularly on Mac with Silicon chips, you need to authenticate with GitHub Container Registry:
 
-1. Create a personal access token (PAT) in GitHub:
+1. Create a [personal access token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) in GitHub:
    - Go to GitHub → Settings → Developer settings → Personal access tokens → Generate new token
    - Select the `read:packages` scope
    - Generate and copy your token
