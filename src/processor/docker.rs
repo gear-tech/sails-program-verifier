@@ -13,7 +13,6 @@ use bollard::{
 use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use std::env;
-use tokio_stream::StreamExt;
 
 pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
