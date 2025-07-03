@@ -3,14 +3,14 @@ use anyhow::Result;
 use bollard::{
     auth::DockerCredentials,
     container::{
-        Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
+        Config, CreateContainerOptions, ListContainersOptions, LogsOptions, RemoveContainerOptions,
         WaitContainerOptions,
     },
     image::{CreateImageOptions, ListImagesOptions},
     secret::HostConfig,
     Docker,
 };
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use std::env;
 use tokio_stream::StreamExt;
@@ -118,6 +118,20 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         )
         .try_collect::<Vec<_>>()
         .await?;
+
+    let logs = docker.logs(
+        &id,
+        Some(LogsOptions::<String> {
+            stdout: true,
+            stderr: true,
+            ..Default::default()
+        }),
+    );
+
+    logs.for_each(|l| async move {
+        log::debug!("{}: {:?}", &verif.id, l);
+    })
+    .await;
 
     for r in c_result {
         log::info!(
