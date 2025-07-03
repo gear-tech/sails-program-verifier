@@ -55,6 +55,7 @@ pub async fn remove_container(id: &str) -> Result<()> {
 }
 
 pub async fn build_program(verif: &Verification, project_path: &str) -> Result<String> {
+    log::debug!("{}: Start building program. {}", &verif.id, project_path);
     let docker = Docker::connect_with_local_defaults()?;
 
     let cc_options = CreateContainerOptions {

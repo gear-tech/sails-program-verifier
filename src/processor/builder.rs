@@ -20,7 +20,7 @@ pub async fn build_project(verif: Verification) -> Result<BuildArtifacts> {
     let proj_path = get_project_path(&verif.id);
 
     fs::create_dir_all(&proj_path)?;
-    log::info!("{}: project dir created", &verif.id);
+    log::info!("{}: project dir created ({:?})", &verif.id, &proj_path);
 
     build_program(&verif, proj_path.to_str().unwrap()).await?;
     log::info!("{}: program built", &verif.id);
@@ -32,6 +32,7 @@ pub async fn build_project(verif: Verification) -> Result<BuildArtifacts> {
 
     for entry in built_files {
         let path = entry.as_ref().unwrap().path().to_str().unwrap().to_string();
+        log::debug!("{:?} file found", &path);
         if path.ends_with(".opt.wasm") {
             wasm_path = Some(entry.as_ref().unwrap().path());
         } else if path.ends_with(".idl") {
