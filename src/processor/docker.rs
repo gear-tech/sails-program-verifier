@@ -93,6 +93,8 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
             ..Default::default()
         }),
         volumes: Some(volumes),
+        attach_stderr: Some(true),
+        attach_stdout: Some(true),
         ..Default::default()
     };
 
