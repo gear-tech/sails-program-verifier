@@ -29,6 +29,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+pwd
+ls -al
+ls -al target/
 ls -al "target/wasm32-gear/release/*.wasm"
 cp target/wasm32-gear/release/*.wasm "$TARGET_DIR"
 
