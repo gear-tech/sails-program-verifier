@@ -1,3 +1,5 @@
+use std::fs;
+
 use crate::consts::AVAILABLE_VERSIONS;
 use anyhow::{bail, Result};
 use blake2::{digest::typenum::U32, Blake2b, Digest};
@@ -50,4 +52,21 @@ pub fn validate_and_get_code_id(code_id: &str) -> Result<String> {
 
 pub fn get_unprefixed_code_id(code_id: &str) -> Option<&str> {
     code_id.strip_prefix("0x")
+}
+
+pub fn create_verifier_dockerfile(version: &str) -> Result<()> {
+    let content = format!(
+        r#"
+FROM ghcr.io/gear-tech/sails-program-builder:{version}
+WORKDIR /scripts
+COPY build.sh .
+RUN mkdir /mnt/build
+WORKDIR /app
+CMD ["/bin/sh", "../scripts/build.sh"]
+"#
+    );
+
+    fs::write(format!("Dockerfile-verifier-{version}"), content)?;
+
+    Ok(())
 }

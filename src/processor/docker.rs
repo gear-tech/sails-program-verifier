@@ -1,12 +1,12 @@
 use crate::{consts::IMAGE_NAME, db::Verification};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use bollard::{
     auth::DockerCredentials,
     container::{
         Config, CreateContainerOptions, ListContainersOptions, LogsOptions, RemoveContainerOptions,
         WaitContainerOptions,
     },
-    image::{CreateImageOptions, ListImagesOptions},
+    image::{BuildImageOptions, CreateImageOptions, ListImagesOptions},
     secret::HostConfig,
     Docker,
 };
@@ -196,6 +196,26 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
     while let Some(msg) = create_stream.next().await {
         if let Err(msg) = msg {
             log::error!("Failed to pull image {version}. {msg:?}");
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn build_verifier_image(version: &str) -> Result<()> {
+    let docker = Docker::connect_with_local_defaults()?;
+
+    let options = BuildImageOptions {
+        dockerfile: format!("Dockerfile-verifier-{version}"),
+        t: format!("verifier:{version}"),
+        ..Default::default()
+    };
+
+    let mut build_stream = docker.build_image(options, None, None);
+
+    while let Some(msg) = build_stream.next().await {
+        if let Err(msg) = msg {
+            bail!("Failed to build image {version}. {msg:?}")
         }
     }
 
