@@ -180,7 +180,7 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
     log::info!("{}: building project", &verif.id);
     let build_res = build_project(verif.clone()).await;
 
-    cleanup(&verif.id).await?;
+    // cleanup(&verif.id).await?;
 
     tokio::task::spawn_blocking(move || {
         let mut conn = pool.get().expect("Failed to get connection");
