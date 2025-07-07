@@ -13,7 +13,6 @@ use bollard::{
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
-use std::collections::HashMap;
 use std::env;
 use tar::Builder;
 
@@ -66,8 +65,6 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     };
 
     let mount = format!("{}:/mnt/target", project_path);
-    let mut volumes: HashMap<String, HashMap<(), ()>> = HashMap::default();
-    volumes.insert(mount.clone(), HashMap::default());
 
     let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
     let project_name_env = format!(
@@ -94,7 +91,6 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
             binds: Some(vec![mount.clone()]),
             ..Default::default()
         }),
-        volumes: Some(volumes),
         attach_stderr: Some(true),
         attach_stdout: Some(true),
         ..Default::default()
