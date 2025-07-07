@@ -33,7 +33,7 @@ fi
 echo "=== $ROOT_DIR/target/wasm32-gear/release ==="
 ls -al "$ROOT_DIR/target/wasm32-gear/release"
 echo "Copying files..."
-cp "$ROOT_DIR/target/wasm32-gear/release/*.wasm" "$TARGET_DIR"
+cp "$ROOT_DIR/target/wasm32-gear/release/*" "$TARGET_DIR"
 
 if [ "$BUILD_IDL" = "true" ]; then
     echo "Building the idl"
