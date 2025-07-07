@@ -35,7 +35,7 @@ fi
 echo "=== $RELEASE_DIR ==="
 ls -al "$RELEASE_DIR"
 echo "Copying files..."
-cp "$RELEASE_DIR/*" "$MNT_DIR"
+cp "$RELEASE_DIR"/* "$MNT_DIR"
 
 if [ "$BUILD_IDL" = "true" ]; then
     echo "Building the idl"
