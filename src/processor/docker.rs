@@ -6,8 +6,8 @@ use bollard::{
     models::ContainerCreateBody,
     query_parameters::{
         BuildImageOptions, CreateContainerOptions, CreateImageOptions, ListContainersOptions,
-        ListImagesOptions, LogsOptions, RemoveContainerOptions, StartContainerOptions,
-        WaitContainerOptions,
+        ListImagesOptions, LogsOptions, RemoveContainerOptions, RemoveImageOptions,
+        StartContainerOptions, WaitContainerOptions,
     },
     secret::HostConfig,
     Docker,
@@ -108,7 +108,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     log::info!("{}: container created({})", &verif.id, &id[0..12]);
 
     docker
-        .start_container(&id, None::<StartContainerOptions>)
+        .start_container(&id, Some(StartContainerOptions::default()))
         .await?;
 
     log::info!("{}: container started({})", &verif.id, &id[0..12]);
@@ -151,7 +151,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     Ok(id)
 }
 
-async fn does_image_exist(version: &str, docker: &Docker) -> Result<bool> {
+async fn does_image_exist(image_name: &str, docker: &Docker) -> Result<bool> {
     let images = docker
         .list_images(Some(ListImagesOptions {
             all: true,
@@ -166,7 +166,7 @@ async fn does_image_exist(version: &str, docker: &Docker) -> Result<bool> {
             continue;
         }
         for tag in tags {
-            if tag == format!("{}:{}", IMAGE_NAME, version) {
+            if tag == image_name {
                 return Ok(true);
             }
         }
@@ -209,10 +209,24 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
 
 pub async fn build_verifier_image(version: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
+    let image_name = format!("verifier:{version}");
+
+    if does_image_exist(version, &docker).await? {
+        docker
+            .remove_image(
+                &image_name,
+                Some(RemoveImageOptions {
+                    force: true,
+                    ..Default::default()
+                }),
+                None,
+            )
+            .await?;
+    }
 
     let options = BuildImageOptions {
         dockerfile: "Dockerfile".to_string(),
-        t: Some(format!("verifier:{version}")),
+        t: Some(image_name),
         ..Default::default()
     };
 

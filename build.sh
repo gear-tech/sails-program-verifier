@@ -3,6 +3,7 @@ PROJECT_NAME=$PROJECT_NAME
 BUILD_IDL=$BUILD_IDL
 MANIFEST_PATH=$MANIFEST_PATH
 TARGET_DIR=/mnt/target
+ROOT_DIR=$(pwd)
 
 echo "Clonning repository $REPO_URL"
 git clone --depth 1 $REPO_URL .
@@ -23,17 +24,16 @@ if [ -z "$MANIFEST_PATH" ]; then
     fi
 fi
 
-cargo build --manifest-path $MANIFEST_PATH --release --target-dir="/app/target"
+cargo build --manifest-path $MANIFEST_PATH --release --target-dir="$ROOT_DIR/target"
 
 if [ $? -ne 0 ]; then
     exit 1
 fi
 
-pwd
-ls -al
-ls -al /app/target/
-ls -al "/app/target/wasm32-gear/release/*.wasm"
-cp "/app/target/wasm32-gear/release/*.wasm" "$TARGET_DIR"
+echo "=== $ROOT_DIR/target/wasm32-gear/release ==="
+ls -al "$ROOT_DIR/target/wasm32-gear/release"
+echo "Copying files..."
+cp "$ROOT_DIR/target/wasm32-gear/release/*.wasm" "$TARGET_DIR"
 
 if [ "$BUILD_IDL" = "true" ]; then
     echo "Building the idl"
@@ -41,6 +41,7 @@ if [ "$BUILD_IDL" = "true" ]; then
     if [ $? -ne 0 ]; then
         exit 1
     fi
-
-    ls -al "$TARGET_DIR/*.idl"
 fi
+
+echo "=== $TARGET_DIR ==="
+ls -al "$TARGET_DIR"
