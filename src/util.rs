@@ -55,6 +55,12 @@ pub fn get_unprefixed_code_id(code_id: &str) -> Option<&str> {
 }
 
 pub fn create_verifier_dockerfile(version: &str) -> Result<()> {
+    let file_path = format!("Dockerfile-verifier-{version}");
+
+    if std::path::Path::new(&file_path).exists() {
+        return Ok(());
+    }
+
     let content = format!(
         r#"
 FROM ghcr.io/gear-tech/sails-program-builder:{version}

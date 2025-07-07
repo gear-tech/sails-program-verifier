@@ -2,27 +2,28 @@ use crate::{consts::IMAGE_NAME, db::Verification};
 use anyhow::{bail, Result};
 use bollard::{
     auth::DockerCredentials,
-    container::{
-        Config, CreateContainerOptions, ListContainersOptions, LogsOptions, RemoveContainerOptions,
+    body_full,
+    models::ContainerCreateBody,
+    query_parameters::{
+        BuildImageOptions, CreateContainerOptions, CreateImageOptions, ListContainersOptions,
+        ListImagesOptions, LogsOptions, RemoveContainerOptions, StartContainerOptions,
         WaitContainerOptions,
     },
-    image::{BuildImageOptions, CreateImageOptions, ListImagesOptions},
     secret::HostConfig,
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
 use std::collections::HashMap;
 use std::env;
+use tar::Builder;
 
 pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
 
-    let filters: HashMap<String, Vec<String>> = HashMap::new();
-
     let containers = docker
         .list_containers(Some(ListContainersOptions {
             all: true,
-            filters,
+            filters: None,
             ..Default::default()
         }))
         .await?;
@@ -46,7 +47,9 @@ pub async fn prune_containers() -> Result<()> {
 pub async fn remove_container(id: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
 
-    docker.remove_container(id, None).await?;
+    docker
+        .remove_container(id, None::<RemoveContainerOptions>)
+        .await?;
 
     log::info!("{id}: container removed");
 
@@ -58,13 +61,13 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     let docker = Docker::connect_with_local_defaults()?;
 
     let cc_options = CreateContainerOptions {
-        name: &verif.id,
-        platform: None,
+        name: Some(verif.id.to_string()),
+        platform: "".to_string(),
     };
 
     let mount = format!("{}:/mnt/target", project_path);
-    let mut volumes: HashMap<&str, HashMap<(), ()>> = HashMap::default();
-    volumes.insert(&mount, HashMap::default());
+    let mut volumes: HashMap<String, HashMap<(), ()>> = HashMap::default();
+    volumes.insert(mount.clone(), HashMap::default());
 
     let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
     let project_name_env = format!(
@@ -76,16 +79,16 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         &verif.manifest_path.clone().unwrap_or_default()
     );
 
-    let mut env: Vec<&str> = vec![&repo_url_env, &project_name_env, &manifest_path_env];
+    let mut env: Vec<String> = vec![repo_url_env, project_name_env, manifest_path_env];
 
     if verif.build_idl {
-        env.push("BUILD_IDL=true");
+        env.push("BUILD_IDL=true".to_string());
     }
 
     let image = format!("{}:{}", IMAGE_NAME, &verif.version);
 
-    let cc_config = Config {
-        image: Some(image.as_str()),
+    let cc_config = ContainerCreateBody {
+        image: Some(image),
         env: Some(env),
         host_config: Some(HostConfig {
             binds: Some(vec![mount.clone()]),
@@ -104,7 +107,9 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
 
     log::info!("{}: container created({})", &verif.id, &id[0..12]);
 
-    docker.start_container::<String>(&id, None).await?;
+    docker
+        .start_container(&id, None::<StartContainerOptions>)
+        .await?;
 
     log::info!("{}: container started({})", &verif.id, &id[0..12]);
 
@@ -112,7 +117,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         .wait_container(
             &id,
             Some(WaitContainerOptions {
-                condition: "not-running",
+                condition: "not-running".to_string(),
             }),
         )
         .try_collect::<Vec<_>>()
@@ -120,7 +125,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
 
     let logs = docker.logs(
         &id,
-        Some(LogsOptions::<String> {
+        Some(LogsOptions {
             stdout: true,
             stderr: true,
             ..Default::default()
@@ -150,7 +155,7 @@ async fn does_image_exist(version: &str, docker: &Docker) -> Result<bool> {
     let images = docker
         .list_images(Some(ListImagesOptions {
             all: true,
-            filters: HashMap::<&str, Vec<&str>>::new(),
+            filters: None,
             ..Default::default()
         }))
         .await?;
@@ -187,7 +192,7 @@ pub async fn pull_docker_image(version: &str) -> Result<()> {
     };
 
     let options = CreateImageOptions {
-        from_image: format!("{}:{}", IMAGE_NAME, version),
+        from_image: Some(format!("{}:{}", IMAGE_NAME, version)),
         ..Default::default()
     };
 
@@ -206,12 +211,22 @@ pub async fn build_verifier_image(version: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
 
     let options = BuildImageOptions {
-        dockerfile: format!("Dockerfile-verifier-{version}"),
-        t: format!("verifier:{version}"),
+        dockerfile: "Dockerfile".to_string(),
+        t: Some(format!("verifier:{version}")),
         ..Default::default()
     };
 
-    let mut build_stream = docker.build_image(options, None, None);
+    let mut tar_content = Vec::new();
+
+    {
+        let mut tar_builder = Builder::new(&mut tar_content);
+        tar_builder
+            .append_path_with_name(format!("Dockerfile-verifier-{version}"), "Dockerfile")?;
+        tar_builder.append_path("build.sh")?;
+        tar_builder.finish()?;
+    }
+
+    let mut build_stream = docker.build_image(options, None, Some(body_full(tar_content.into())));
 
     while let Some(msg) = build_stream.next().await {
         if let Err(msg) = msg {

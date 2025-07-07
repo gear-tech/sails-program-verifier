@@ -17,9 +17,9 @@ async fn main() -> anyhow::Result<()> {
     prune_containers().await?;
 
     for v in AVAILABLE_VERSIONS {
+        log::info!("Creating verifier dockerfile and image for version {v}");
         create_verifier_dockerfile(v)?;
         build_verifier_image(v).await?;
-        // pull_docker_image(v).await?;
     }
 
     let pool = Arc::new(get_connection_pool());

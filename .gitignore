@@ -5,3 +5,5 @@ tests/Cargo.lock
 .DS_Store
 .env
 .binpath
+
+Dockerfile-verifier-*
