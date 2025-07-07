@@ -23,11 +23,14 @@ if [ -z "$MANIFEST_PATH" ]; then
     fi
 fi
 
-cargo build --target-dir=$TARGET_DIR --manifest-path $MANIFEST_PATH --release
+cargo build --manifest-path $MANIFEST_PATH --release
 
 if [ $? -ne 0 ]; then
     exit 1
 fi
+
+ls -al "target/wasm32-gear/release/*.wasm"
+cp target/wasm32-gear/release/*.wasm "$TARGET_DIR"
 
 if [ "$BUILD_IDL" = "true" ]; then
     echo "Building the idl"
@@ -35,8 +38,6 @@ if [ "$BUILD_IDL" = "true" ]; then
     if [ $? -ne 0 ]; then
         exit 1
     fi
-fi
 
-cd $TARGET_DIR
-cp wasm32-gear/release/*.wasm .
-rm -rf release/ wasm-projects/ wasm32-gear/ .rust* debug/ doc/
+    ls -al "$TARGET_DIR/*.idl"
+fi
