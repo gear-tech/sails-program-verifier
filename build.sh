@@ -8,6 +8,7 @@ TARGET_DIR="$ROOT_DIR/target"
 RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
 
 echo "Test file created"
+echo "test content" > "$MNT_DIR/test.txt"
 ls -la "$MNT_DIR/test.txt"
 
 echo "Clonning repository $REPO_URL"
