@@ -86,7 +86,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         source: Some(project_path.to_string()),
         target: Some("/mnt/target".to_string()),
         read_only: Some(false),
-        typ: Some(MountTypeEnum::VOLUME),
+        typ: Some(MountTypeEnum::BIND),
         ..Default::default()
     };
 
