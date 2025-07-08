@@ -9,7 +9,7 @@ use bollard::{
         ListImagesOptions, LogsOptions, RemoveContainerOptions, RemoveImageOptions,
         StartContainerOptions, WaitContainerOptions,
     },
-    secret::HostConfig,
+    secret::{HostConfig, Mount, MountTypeEnum},
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
@@ -64,8 +64,6 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         platform: "".to_string(),
     };
 
-    let mount = format!("{}:/mnt/target", project_path);
-
     let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
     let project_name_env = format!(
         "PROJECT_NAME={}",
@@ -84,13 +82,22 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
 
     let image = format!("{}:{}", IMAGE_NAME, &verif.version);
 
+    let mount = Mount {
+        source: Some(project_path.to_string()),
+        target: Some("/mnt/target".to_string()),
+        read_only: Some(false),
+        typ: Some(MountTypeEnum::VOLUME),
+        ..Default::default()
+    };
+
     let cc_config = ContainerCreateBody {
         image: Some(image),
         env: Some(env),
         host_config: Some(HostConfig {
-            binds: Some(vec![mount.clone()]),
+            mounts: Some(vec![mount]),
             ..Default::default()
         }),
+
         attach_stderr: Some(true),
         attach_stdout: Some(true),
         ..Default::default()

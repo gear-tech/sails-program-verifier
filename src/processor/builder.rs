@@ -68,10 +68,10 @@ pub async fn build_project(verif: Verification) -> Result<BuildArtifacts> {
 }
 
 pub async fn cleanup(verif_id: &str) -> Result<()> {
-    fs::remove_dir_all(get_project_path(verif_id))?;
+    // fs::remove_dir_all(get_project_path(verif_id))?;
     log::info!("{verif_id}: project dir cleaned");
 
-    remove_container(verif_id).await?;
+    // remove_container(verif_id).await?;
 
     Ok(())
 }
