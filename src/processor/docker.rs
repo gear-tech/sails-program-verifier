@@ -82,25 +82,21 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
 
     let image = format!("{}:{}", IMAGE_NAME, &verif.version);
 
-    // let mount = Mount {
-    //     source: Some(project_path.to_string()),
-    //     target: Some("/mnt/target".to_string()),
-    //     read_only: Some(false),
-    //     typ: Some(MountTypeEnum::BIND),
-    //     ..Default::default()
-    // };
-
-    let mut volumes: HashMap<String, HashMap<(), ()>> = HashMap::default();
-    volumes.insert(format!("{}:/mnt/target", project_path), HashMap::default());
+    let mount = Mount {
+        source: Some(project_path.to_string()),
+        target: Some("/mnt/target".to_string()),
+        read_only: Some(false),
+        typ: Some(MountTypeEnum::BIND),
+        ..Default::default()
+    };
 
     let cc_config = ContainerCreateBody {
         image: Some(image),
         env: Some(env),
-        // host_config: Some(HostConfig {
-        // mounts: Some(vec![mount]),
-        // ..Default::default()
-        // }),
-        volumes: Some(volumes),
+        host_config: Some(HostConfig {
+            mounts: Some(vec![mount]),
+            ..Default::default()
+        }),
         attach_stderr: Some(true),
         attach_stdout: Some(true),
         ..Default::default()
