@@ -22,7 +22,7 @@ use tokio_stream::wrappers::IntervalStream;
 mod builder;
 mod docker;
 pub mod network_client;
-pub use docker::{build_verifier_image, prune_containers, pull_docker_image};
+pub use docker::{build_verifier_image, prune_containers, remove_dangling_images};
 
 const MAX_VERIFS_IN_PROGRESS: i64 = 10;
 const CHECK_INTERVAL: Duration = Duration::from_secs(30);
@@ -186,7 +186,7 @@ async fn build_and_verify(pool: Arc<Pool>, verif: Verification) -> Result<()> {
         let mut conn = pool.get().expect("Failed to get connection");
 
         if let Err(err) = build_res {
-            let err_msg = format!("Failed to build project. {:?}", err);
+            let err_msg = format!("Failed to build project. {err:?}");
             Verification::update(
                 &mut conn,
                 &verif.id,

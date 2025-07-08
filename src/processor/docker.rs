@@ -1,30 +1,25 @@
 use crate::{consts::IMAGE_NAME, db::Verification};
 use anyhow::{bail, Result};
 use bollard::{
-    auth::DockerCredentials,
     body_full,
     models::ContainerCreateBody,
     query_parameters::{
-        BuildImageOptions, CreateContainerOptions, CreateImageOptions, ListContainersOptions,
-        ListImagesOptions, LogsOptions, RemoveContainerOptions, RemoveImageOptions,
-        StartContainerOptions, WaitContainerOptions,
+        BuildImageOptionsBuilder, CreateContainerOptionsBuilder, ListContainersOptionsBuilder,
+        LogsOptionsBuilder, PruneImagesOptionsBuilder, RemoveContainerOptions,
+        RemoveContainerOptionsBuilder, StartContainerOptions, WaitContainerOptionsBuilder,
     },
     secret::{HostConfig, Mount, MountTypeEnum},
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 use tar::Builder;
 
 pub async fn prune_containers() -> Result<()> {
     let docker = Docker::connect_with_local_defaults().unwrap();
 
     let containers = docker
-        .list_containers(Some(ListContainersOptions {
-            all: true,
-            filters: None,
-            ..Default::default()
-        }))
+        .list_containers(Some(ListContainersOptionsBuilder::new().all(true).build()))
         .await?;
 
     for c in containers {
@@ -32,10 +27,7 @@ pub async fn prune_containers() -> Result<()> {
         docker
             .remove_container(
                 &id,
-                Some(RemoveContainerOptions {
-                    force: true,
-                    ..Default::default()
-                }),
+                Some(RemoveContainerOptionsBuilder::new().force(true).build()),
             )
             .await?;
     }
@@ -59,10 +51,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     log::debug!("{}: Start building program. {}", &verif.id, project_path);
     let docker = Docker::connect_with_local_defaults()?;
 
-    let cc_options = CreateContainerOptions {
-        name: Some(verif.id.to_string()),
-        platform: "".to_string(),
-    };
+    let cc_options = CreateContainerOptionsBuilder::new().name(&verif.id).build();
 
     let repo_url_env = format!("REPO_URL={}", &verif.repo_link);
     let project_name_env = format!(
@@ -118,20 +107,18 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     let c_result = docker
         .wait_container(
             &id,
-            Some(WaitContainerOptions {
-                condition: "not-running".to_string(),
-            }),
+            Some(
+                WaitContainerOptionsBuilder::new()
+                    .condition("not-running")
+                    .build(),
+            ),
         )
         .try_collect::<Vec<_>>()
         .await?;
 
     let logs = docker.logs(
         &id,
-        Some(LogsOptions {
-            stdout: true,
-            stderr: true,
-            ..Default::default()
-        }),
+        Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
     );
 
     logs.for_each(|l| async move {
@@ -153,84 +140,14 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
     Ok(id)
 }
 
-async fn does_image_exist(image_name: &str, docker: &Docker) -> Result<bool> {
-    let images = docker
-        .list_images(Some(ListImagesOptions {
-            all: true,
-            filters: None,
-            ..Default::default()
-        }))
-        .await?;
-
-    for image in images {
-        let tags = image.repo_tags;
-        if tags.is_empty() {
-            continue;
-        }
-        for tag in tags {
-            if tag == image_name {
-                return Ok(true);
-            }
-        }
-    }
-
-    Ok(false)
-}
-
-pub async fn pull_docker_image(version: &str) -> Result<()> {
-    let docker = Docker::connect_with_local_defaults()?;
-
-    if does_image_exist(version, &docker).await? {
-        return Ok(());
-    }
-
-    log::info!("Pulling image w/ version {}", version);
-
-    let auth_config = DockerCredentials {
-        username: env::var("DOCKER_USERNAME").ok(),
-        password: env::var("DOCKER_ACCESS_TOKEN").ok(),
-        serveraddress: Some("ghcr.io".to_string()),
-        ..Default::default()
-    };
-
-    let options = CreateImageOptions {
-        from_image: Some(format!("{}:{}", IMAGE_NAME, version)),
-        ..Default::default()
-    };
-
-    let mut create_stream = docker.create_image(Some(options), None, Some(auth_config));
-
-    while let Some(msg) = create_stream.next().await {
-        if let Err(msg) = msg {
-            log::error!("Failed to pull image {version}. {msg:?}");
-        }
-    }
-
-    Ok(())
-}
-
 pub async fn build_verifier_image(version: &str) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
     let image_name = format!("verifier:{version}");
 
-    if does_image_exist(version, &docker).await? {
-        docker
-            .remove_image(
-                &image_name,
-                Some(RemoveImageOptions {
-                    force: true,
-                    ..Default::default()
-                }),
-                None,
-            )
-            .await?;
-    }
-
-    let options = BuildImageOptions {
-        dockerfile: "Dockerfile".to_string(),
-        t: Some(image_name),
-        ..Default::default()
-    };
+    let options = BuildImageOptionsBuilder::new()
+        .dockerfile("Dockerfile")
+        .t(&image_name)
+        .build();
 
     let mut tar_content = Vec::new();
 
@@ -249,6 +166,20 @@ pub async fn build_verifier_image(version: &str) -> Result<()> {
             bail!("Failed to build image {version}. {msg:?}")
         }
     }
+
+    Ok(())
+}
+
+pub async fn remove_dangling_images() -> Result<()> {
+    let docker = Docker::connect_with_local_defaults()?;
+
+    let filters = HashMap::from([("dangling", vec!["true"])]);
+
+    docker
+        .prune_images(Some(
+            PruneImagesOptionsBuilder::new().filters(&filters).build(),
+        ))
+        .await?;
 
     Ok(())
 }
