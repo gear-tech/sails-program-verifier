@@ -66,7 +66,7 @@ pub fn create_verifier_dockerfile(version: &str) -> Result<()> {
 FROM ghcr.io/gear-tech/sails-program-builder:{version}
 WORKDIR /scripts
 COPY build.sh .
-RUN mkdir /mnt/build
+RUN mkdir /mnt/target
 WORKDIR /app
 CMD ["/bin/sh", "../scripts/build.sh"]
 "#
