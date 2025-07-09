@@ -9,6 +9,13 @@ To verify a program, it must be compiled with specific versions of Sails, Rust, 
 
 To ensure consistency, the repository includes Docker images that can be used for program compilation.
 
+Before using these Docker images, ensure you have Docker installed on your system:
+
+- **Windows/Mac:** Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop/)
+- **Linux:** Follow the installation guide for your distribution at [docs.docker.com](https://docs.docker.com/engine/install/)
+
+Docker is required to run the containerized build environment that ensures reproducible compilation across different systems.
+
 The verification service itself relies on these images when processing verification requests.
 
 ## Compiling a Contract
