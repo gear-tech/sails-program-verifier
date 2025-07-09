@@ -11,7 +11,7 @@ echo "Test file created"
 echo "test content" > "$MNT_DIR/test.txt"
 ls -la "$MNT_DIR/test.txt"
 
-echo "Clonning repository $REPO_URL"
+echo "Cloning repository $REPO_URL"
 git clone --depth 1 $REPO_URL .
 
 if [ $? -ne 0 ]; then
