@@ -1,8 +1,10 @@
 use dotenvy::dotenv;
 use sails_program_verifier::{
+    build_verifier_image,
     consts::AVAILABLE_VERSIONS,
     db::{get_connection_pool, Verification},
-    prune_containers, pull_docker_image, run_processor, run_server,
+    prune_containers, remove_dangling_images, run_processor, run_server,
+    util::create_verifier_dockerfile,
 };
 use std::sync::Arc;
 
@@ -15,12 +17,16 @@ async fn main() -> anyhow::Result<()> {
     prune_containers().await?;
 
     for v in AVAILABLE_VERSIONS {
-        pull_docker_image(v).await?;
+        log::info!("Creating verifier dockerfile and image for version {v}");
+        create_verifier_dockerfile(v)?;
+        build_verifier_image(v).await?;
     }
 
-    let pool = Arc::new(get_connection_pool());
+    log::info!("Removing dangling images");
+    remove_dangling_images().await?;
 
-    log::info!("Connected to database");
+    log::info!("Connecting to the database");
+    let pool = Arc::new(get_connection_pool());
 
     let server_pool = Arc::clone(&pool);
     let proc_pool = Arc::clone(&pool);

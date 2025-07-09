@@ -2,9 +2,16 @@ REPO_URL=$REPO_URL
 PROJECT_NAME=$PROJECT_NAME
 BUILD_IDL=$BUILD_IDL
 MANIFEST_PATH=$MANIFEST_PATH
-TARGET_DIR=/mnt/target
+MNT_DIR=/mnt/target
+ROOT_DIR=$(pwd)
+TARGET_DIR="$ROOT_DIR/target"
+RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
 
-echo "Clonning repository $REPO_URL"
+echo "Test file created"
+echo "test content" > "$MNT_DIR/test.txt"
+ls -la "$MNT_DIR/test.txt"
+
+echo "Cloning repository $REPO_URL"
 git clone --depth 1 $REPO_URL .
 
 if [ $? -ne 0 ]; then
@@ -23,20 +30,24 @@ if [ -z "$MANIFEST_PATH" ]; then
     fi
 fi
 
-cargo build --target-dir=$TARGET_DIR --manifest-path $MANIFEST_PATH --release
+cargo build --manifest-path $MANIFEST_PATH --release --target-dir="$TARGET_DIR"
 
 if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "=== $RELEASE_DIR ==="
+ls -al "$RELEASE_DIR"
+echo "Copying files..."
+cp "$RELEASE_DIR"/* "$MNT_DIR"
+
 if [ "$BUILD_IDL" = "true" ]; then
     echo "Building the idl"
-    cargo-sails sails idl --manifest-path $MANIFEST_PATH --target-dir $TARGET_DIR
+    cargo-sails sails idl --manifest-path $MANIFEST_PATH --target-dir $MNT_DIR
     if [ $? -ne 0 ]; then
         exit 1
     fi
 fi
 
-cd $TARGET_DIR
-cp wasm32-gear/release/*.wasm .
-rm -rf release/ wasm-projects/ wasm32-gear/ .rust* debug/ doc/
+echo "=== $MNT_DIR ==="
+ls -al "$MNT_DIR"

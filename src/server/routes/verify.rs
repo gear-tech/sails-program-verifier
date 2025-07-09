@@ -67,10 +67,11 @@ pub async fn status(
     State(pool): State<Arc<Pool>>,
     Query(params): Query<IdQueryParams>,
 ) -> Result<Json<StatusResponse>, StatusCode> {
+    let time_start = std::time::SystemTime::now();
     let conn = &mut pool.get().unwrap();
 
     if let Some(verif) = Verification::get(conn, &params.id) {
-        Ok(Json(StatusResponse {
+        let result = Ok(Json(StatusResponse {
             status: verif.status.into(),
             failed_reason: verif.failed_reason,
             created_at: verif
@@ -78,7 +79,16 @@ pub async fn status(
                 .duration_since(UNIX_EPOCH)
                 .expect("Time went backwards")
                 .as_millis(),
-        }))
+        }));
+        let time_end = std::time::SystemTime::now();
+        let duration = time_end
+            .duration_since(time_start)
+            .expect("Time went backwards");
+        log::debug!(
+            "Verification status request took {}ms",
+            duration.as_millis()
+        );
+        result
     } else {
         Err(StatusCode::NOT_FOUND)
     }

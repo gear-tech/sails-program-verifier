@@ -62,7 +62,7 @@ pub async fn codes(
             Ok(Json(result))
         }
         Err(error) => {
-            log::error!("Failed to get codes from db {:?}", error);
+            log::error!("Failed to get codes from db {error:?}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }

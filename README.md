@@ -9,14 +9,38 @@ To verify a program, it must be compiled with specific versions of Sails, Rust, 
 
 To ensure consistency, the repository includes Docker images that can be used for program compilation.
 
+Before using these Docker images, ensure you have Docker installed on your system:
+
+- **Windows/Mac:** Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop/)
+- **Linux:** Follow the installation guide for your distribution at [docs.docker.com](https://docs.docker.com/engine/install/)
+
+Docker is required to run the containerized build environment that ensures reproducible compilation across different systems.
+
 The verification service itself relies on these images when processing verification requests.
 
 ## Compiling a Contract
 
-Developers can use the provided Docker images to compile their programs with the correct environment. Here’s an example command:
+Developers can use the provided Docker images to compile their programs with the correct environment. Here are example commands:
 
-```sh
-docker run -v $(pwd):/app --entrypoint /bin/bash ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build --release'
+- If program is in the current directory:
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build --release'
+```
+
+- If project is a part of a workspace:
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build -p <project_name> --release'
+```
+
+- If project is in a subdirectory:
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build --manifest-path <path/to/project/Cargo.toml> --release'
 ```
 
 Check available versions [here](https://github.com/gear-tech/sails-program-verifier/pkgs/container/sails-program-builder)
