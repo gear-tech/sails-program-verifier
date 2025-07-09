@@ -16,18 +16,24 @@ The verification service itself relies on these images when processing verificat
 Developers can use the provided Docker images to compile their programs with the correct environment. Here are example commands:
 
 - If program is in the current directory:
-```sh
-docker run -v $(pwd):/app --entrypoint /bin/bash --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build --release'
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build --release'
 ```
 
 - If project is a part of a workspace:
-```sh
-docker run -v $(pwd):/app --entrypoint /bin/bash --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build -p <project_name> --release'
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build -p <project_name> --release'
 ```
 
 - If project is in a subdirectory:
-```sh
-docker run -v $(pwd):/app --entrypoint /bin/bash --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> -c 'cargo build --manifest-path <path/to/project/Cargo.toml> --release'
+```bash
+docker run -v $(pwd):/app --entrypoint /bin/bash \
+  --platform=linux/amd64 ghcr.io/gear-tech/sails-program-builder:<version> \
+  -c 'cargo build --manifest-path <path/to/project/Cargo.toml> --release'
 ```
 
 Check available versions [here](https://github.com/gear-tech/sails-program-verifier/pkgs/container/sails-program-builder)
