@@ -24,6 +24,7 @@ pub async fn verify(
         version,
         network,
         build_idl,
+        base_path,
     }): Json<VerifyRequest>,
 ) -> Result<Json<VerifyResponse>, AppError> {
     let verification_id = generate_id();
@@ -32,7 +33,7 @@ pub async fn verify(
 
     let (project_name, manifest_path) = match project.unwrap_or_default() {
         Project::Root => (None, None),
-        Project::Name(name) => (Some(name), None),
+        Project::Package(name) => (Some(name), None),
         Project::ManifestPath(path) => (None, Some(path)),
     };
 
@@ -46,6 +47,7 @@ pub async fn verify(
             code_id,
             project_name,
             manifest_path,
+            base_path,
             version,
             status: VerificationStatus::Pending,
             network: network.try_into()?,

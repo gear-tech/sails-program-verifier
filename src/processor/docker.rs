@@ -62,8 +62,14 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         "MANIFEST_PATH={}",
         &verif.manifest_path.clone().unwrap_or_default()
     );
+    let base_path_env = format!("BASE_PATH={}", &verif.base_path.clone().unwrap_or_default());
 
-    let mut env: Vec<String> = vec![repo_url_env, project_name_env, manifest_path_env];
+    let mut env: Vec<String> = vec![
+        repo_url_env,
+        project_name_env,
+        manifest_path_env,
+        base_path_env,
+    ];
 
     if verif.build_idl {
         env.push("BUILD_IDL=true".to_string());

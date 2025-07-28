@@ -6,8 +6,8 @@ use utoipa::{IntoParams, ToSchema};
 pub enum Project {
     #[default]
     Root,
-    /// Name of the package to be built.
-    Name(String),
+    /// Name of the package to be built and its base path (optional)
+    Package(String),
     /// Manifest path of the package
     ManifestPath(String),
 }
@@ -36,6 +36,8 @@ pub struct VerifyRequest {
     pub version: String,
     /// Project to verify (default: root)
     pub project: Option<Project>,
+    /// Base path of the package to be built (default: root)
+    pub base_path: Option<String>,
     /// Network where the code of the program is deployed
     pub network: String,
     /// ID of the deployed code

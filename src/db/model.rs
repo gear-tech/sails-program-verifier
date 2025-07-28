@@ -99,6 +99,7 @@ pub struct Verification {
     pub code_id: String,
     pub project_name: Option<String>,
     pub manifest_path: Option<String>,
+    pub base_path: Option<String>,
     pub build_idl: bool,
     pub version: String,
     pub status: VerificationStatus,
