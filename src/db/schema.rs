@@ -37,14 +37,18 @@ diesel::table! {
         code_id -> Varchar,
         project_name -> Nullable<Varchar>,
         manifest_path -> Nullable<Varchar>,
-        base_path -> Nullable<Varchar>,
         build_idl -> Bool,
         version -> Varchar,
         status -> Verificationstatus,
         network -> Network,
         failed_reason -> Nullable<Text>,
         created_at -> Timestamp,
+        base_path -> Nullable<Varchar>,
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(code, idl, verification,);
+diesel::allow_tables_to_appear_in_same_query!(
+    code,
+    idl,
+    verification,
+);
