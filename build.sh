@@ -4,18 +4,17 @@ BUILD_IDL=$BUILD_IDL
 MANIFEST_PATH=$MANIFEST_PATH
 BASE_PATH=$BASE_PATH
 
-ROOT_DIR=$(pwd)
-TARGET_DIR="$ROOT_DIR/target"
+MNT_DIR="/mnt/target"
+ROOT_DIR="/project"
+APP_DIR="/app"
+TARGET_DIR="$APP_DIR/target"
 RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
-MNT_DIR=/mnt/target
 
-echo "Root directory: $ROOT_DIR"
-echo "Release directory: $RELEASE_DIR"
 echo "Target directory: $TARGET_DIR"
-echo "Mount directory: $MNT_DIR"
+echo "Release directory: $RELEASE_DIR"
 
-echo "Cloning repository $REPO_URL"
-git clone --depth 1 $REPO_URL .
+echo "Cloning repository $REPO_URL into $ROOT_DIR"
+git clone --depth 1 "$REPO_URL" "$ROOT_DIR"
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to clone the repository $REPO_URL" >&2
@@ -23,9 +22,18 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -n "$BASE_PATH" ]; then
-    cd "$BASE_PATH"
-    echo "Changing directory to $(pwd)"
+    if [[ "$BASE_PATH" == /* ]]; then
+        echo "Moving $ROOT_DIR$BASE_PATH to $APP_DIR"
+        mv "$ROOT_DIR$BASE_PATH" "$APP_DIR"
+    else
+        echo "Moving $ROOT_DIR/$BASE_PATH to $APP_DIR"
+        mv "$ROOT_DIR/$BASE_PATH" "$APP_DIR"
+    fi
 fi
+
+cd "$APP_DIR"
+echo "Changing directory to $APP_DIR"
+ls -l
 
 args=
 
@@ -48,7 +56,7 @@ else
 fi
 
 echo "Run cargo build with $args --target-dir $TARGET_DIR"
-RUSTFLAGS="--remap-path-prefix=$(pwd)=/app" cargo build --release $args --target-dir "$TARGET_DIR"
+cargo build --release $args --target-dir "$TARGET_DIR" --locked
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to build the project"

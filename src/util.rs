@@ -62,7 +62,7 @@ pub fn create_verifier_dockerfile(version: &str) -> Result<()> {
 WORKDIR /scripts
 COPY build.sh .
 RUN mkdir /mnt/target
-WORKDIR /app
+
 CMD ["/bin/sh", "../scripts/build.sh"]
 "#
     );
