@@ -1,3 +1,5 @@
+#!/bin/bash
+
 REPO_URL=$REPO_URL
 PROJECT_NAME=$PROJECT_NAME
 BUILD_IDL=$BUILD_IDL
@@ -21,15 +23,21 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+base_path="$ROOT_DIR"
+
 if [ -n "$BASE_PATH" ]; then
-    if [[ "$BASE_PATH" == /* ]]; then
-        echo "Moving $ROOT_DIR$BASE_PATH to $APP_DIR"
-        mv "$ROOT_DIR$BASE_PATH" "$APP_DIR"
-    else
-        echo "Moving $ROOT_DIR/$BASE_PATH to $APP_DIR"
-        mv "$ROOT_DIR/$BASE_PATH" "$APP_DIR"
-    fi
+    case "$BASE_PATH" in
+        /*)
+            path="$ROOT_DIR$BASE_PATH"
+            ;;
+        *)
+            path="$ROOT_DIR/$BASE_PATH"
+            ;;
+    esac
 fi
+
+echo "Moving $base_path to $APP_DIR"
+mv "$base_path" "$APP_DIR"
 
 cd "$APP_DIR"
 echo "Changing directory to $APP_DIR"
