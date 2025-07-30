@@ -76,6 +76,12 @@ pub async fn status(
         let result = Ok(Json(StatusResponse {
             status: verif.status.into(),
             failed_reason: verif.failed_reason,
+            code_id: verif.code_id,
+            repo_link: verif.repo_link,
+            project_name: verif.project_name,
+            base_path: verif.base_path,
+            version: verif.version,
+            manifest_path: verif.manifest_path,
             created_at: verif
                 .created_at
                 .duration_since(UNIX_EPOCH)

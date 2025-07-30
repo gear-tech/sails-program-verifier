@@ -18,6 +18,18 @@ pub struct StatusResponse {
     pub status: String,
     /// Reason for failure, if any
     pub failed_reason: Option<String>,
+    /// Code ID
+    pub code_id: String,
+    /// Repository link
+    pub repo_link: String,
+    /// Version of the Docker image used for verification
+    pub version: String,
+    /// Project name
+    pub project_name: Option<String>,
+    /// Manifest path of the package
+    pub manifest_path: Option<String>,
+    /// Base path of the package to be built
+    pub base_path: Option<String>,
     /// Timestamp of the verification
     pub created_at: u128,
 }

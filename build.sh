@@ -48,7 +48,7 @@ else
 fi
 
 echo "Run cargo build with $args --target-dir $TARGET_DIR"
-cargo build --release $args --target-dir "$TARGET_DIR"
+RUSTFLAGS="--remap-path-prefix=$(pwd)=/app" cargo build --release $args --target-dir "$TARGET_DIR"
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to build the project"
