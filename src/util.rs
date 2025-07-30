@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use crate::consts::AVAILABLE_VERSIONS;
+use crate::consts::{AVAILABLE_VERSIONS, LOGS_DIR};
 use anyhow::{bail, Result};
 use blake2::{digest::typenum::U32, Blake2b, Digest};
 use rand::{self, distributions::Alphanumeric, thread_rng, Rng};
@@ -72,10 +72,14 @@ CMD ["/bin/sh", "../scripts/build.sh"]
     Ok(())
 }
 
-pub fn clean_logs_dir() -> Result<()> {
-    let logs_dir = PathBuf::from("/tmp/build_logs");
+pub fn clean_or_create_logs_dir() -> Result<()> {
+    let logs_dir = PathBuf::from(LOGS_DIR);
 
-    fs::remove_dir_all(&logs_dir)?;
+    if logs_dir.exists() {
+        fs::remove_dir_all(&logs_dir)?;
+    }
+
+    fs::create_dir_all(&logs_dir)?;
 
     Ok(())
 }

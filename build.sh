@@ -5,8 +5,8 @@ MANIFEST_PATH=$MANIFEST_PATH
 BASE_PATH=$BASE_PATH
 
 ROOT_DIR=$(pwd)
-RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
 TARGET_DIR="$ROOT_DIR/target"
+RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
 MNT_DIR=/mnt/target
 
 echo "Root directory: $ROOT_DIR"
@@ -23,8 +23,8 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ -n "$BASE_PATH" ]; then
-    echo "Changing directory to $BASE_PATH"
     cd "$BASE_PATH"
+    echo "Changing directory to $(pwd)"
 fi
 
 args=

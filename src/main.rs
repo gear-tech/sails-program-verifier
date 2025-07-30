@@ -4,7 +4,7 @@ use sails_program_verifier::{
     consts::AVAILABLE_VERSIONS,
     db::{get_connection_pool, Verification},
     prune_containers, remove_dangling_images, run_processor, run_server,
-    util::{clean_logs_dir, create_verifier_dockerfile},
+    util::{clean_or_create_logs_dir, create_verifier_dockerfile},
 };
 use std::sync::Arc;
 
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
     remove_dangling_images().await?;
 
     log::info!("Cleaning logs directory");
-    clean_logs_dir()?;
+    clean_or_create_logs_dir()?;
 
     log::info!("Connecting to the database");
     let pool = Arc::new(get_connection_pool());

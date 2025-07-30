@@ -1,4 +1,7 @@
-use crate::{consts::IMAGE_NAME, db::Verification};
+use crate::{
+    consts::{IMAGE_NAME, LOGS_DIR},
+    db::Verification,
+};
 use anyhow::{bail, Result};
 use bollard::{
     body_full,
@@ -127,7 +130,7 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
     );
 
-    let log_file_path = format!("/tmp/build_logs/{}.log", &verif.id);
+    let log_file_path = format!("{}/{}.log", LOGS_DIR, &verif.id);
     let mut log_file = std::fs::File::create(&log_file_path)?;
 
     while let Some(log_chunk) = logs.next().await {
