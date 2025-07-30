@@ -14,6 +14,9 @@ RELEASE_DIR="$TARGET_DIR/wasm32-gear/release"
 
 echo "Target directory: $TARGET_DIR"
 echo "Release directory: $RELEASE_DIR"
+echo "Base path: $BASE_PATH"
+echo "Manifest path: $MANIFEST_PATH"
+echo "Project name: $PROJECT_NAME"
 
 echo "Cloning repository $REPO_URL into $ROOT_DIR"
 git clone --depth 1 "$REPO_URL" "$ROOT_DIR"
@@ -28,15 +31,16 @@ base_path="$ROOT_DIR"
 if [ -n "$BASE_PATH" ]; then
     case "$BASE_PATH" in
         /*)
-            path="$ROOT_DIR$BASE_PATH"
+            base_path="$ROOT_DIR$BASE_PATH"
             ;;
         *)
-            path="$ROOT_DIR/$BASE_PATH"
+            base_path="$ROOT_DIR/$BASE_PATH"
             ;;
     esac
 fi
 
 echo "Moving $base_path to $APP_DIR"
+rm -r "$APP_DIR"
 mv "$base_path" "$APP_DIR"
 
 cd "$APP_DIR"
