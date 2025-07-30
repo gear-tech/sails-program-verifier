@@ -50,6 +50,30 @@ pub async fn remove_container(id: &str) -> Result<()> {
     Ok(())
 }
 
+async fn write_container_logs(docker: &Docker, id: &str) -> Result<()> {
+    let mut logs = docker.logs(
+        id,
+        Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
+    );
+
+    let log_file_path = format!("{}/{}.log", LOGS_DIR, id);
+    let mut log_file = std::fs::File::create(&log_file_path)?;
+
+    while let Some(log_chunk) = logs.next().await {
+        match log_chunk {
+            Ok(chunk) => {
+                log_file.write_all(&chunk.into_bytes())?;
+            }
+            Err(e) => {
+                log::error!("{}: Failed to read log chunk: {:?}", id, e);
+            }
+        }
+    }
+    log_file.flush()?;
+
+    Ok(())
+}
+
 pub async fn build_program(verif: &Verification, project_path: &str) -> Result<String> {
     log::debug!("{}: Start building program. {}", &verif.id, project_path);
     let docker = Docker::connect_with_local_defaults()?;
@@ -123,40 +147,28 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
             ),
         )
         .try_collect::<Vec<_>>()
-        .await?;
+        .await;
 
-    let mut logs = docker.logs(
-        &id,
-        Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
-    );
-
-    let log_file_path = format!("{}/{}.log", LOGS_DIR, &verif.id);
-    let mut log_file = std::fs::File::create(&log_file_path)?;
-
-    while let Some(log_chunk) = logs.next().await {
-        match log_chunk {
-            Ok(chunk) => {
-                log_file.write_all(&chunk.into_bytes())?;
-            }
-            Err(e) => {
-                log::error!("{}: Failed to read log chunk: {:?}", &verif.id, e);
-            }
+    if let Err(e) = c_result {
+        log::error!("{}: Failed to wait for container: {:?}", &verif.id, e);
+        write_container_logs(&docker, &verif.id).await?;
+        bail!("Failed to wait for container");
+    } else {
+        for r in c_result.unwrap() {
+            log::info!(
+                "{}: error: {:?} || status code: {}",
+                &verif.id,
+                r.error,
+                r.status_code
+            );
         }
+
+        write_container_logs(&docker, &verif.id).await?;
+
+        log::info!("{}: container exited({})", &verif.id, &id[0..12]);
+
+        Ok(id)
     }
-    log_file.flush()?;
-
-    for r in c_result {
-        log::info!(
-            "{}: error: {:?} || status code: {}",
-            &verif.id,
-            r.error,
-            r.status_code
-        );
-    }
-
-    log::info!("{}: container exited({})", &verif.id, &id[0..12]);
-
-    Ok(id)
 }
 
 pub async fn build_verifier_image(version: &str) -> Result<()> {
