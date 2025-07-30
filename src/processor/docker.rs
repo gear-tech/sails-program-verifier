@@ -12,7 +12,7 @@ use bollard::{
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write};
 use tar::Builder;
 
 pub async fn prune_containers() -> Result<()> {
@@ -122,15 +122,25 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         .try_collect::<Vec<_>>()
         .await?;
 
-    let logs = docker.logs(
+    let mut logs = docker.logs(
         &id,
         Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
     );
 
-    logs.for_each(|l| async move {
-        log::debug!("{}: {:?}", &verif.id, l);
-    })
-    .await;
+    let log_file_path = format!("/tmp/build_logs/{}.log", &verif.id);
+    let mut log_file = std::fs::File::create(&log_file_path)?;
+
+    while let Some(log_chunk) = logs.next().await {
+        match log_chunk {
+            Ok(chunk) => {
+                log_file.write_all(&chunk.into_bytes())?;
+            }
+            Err(e) => {
+                log::error!("{}: Failed to read log chunk: {:?}", &verif.id, e);
+            }
+        }
+    }
+    log_file.flush()?;
 
     for r in c_result {
         log::info!(

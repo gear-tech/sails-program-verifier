@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use crate::consts::AVAILABLE_VERSIONS;
 use anyhow::{bail, Result};
@@ -68,6 +68,14 @@ CMD ["/bin/sh", "../scripts/build.sh"]
     );
 
     fs::write(file_path, content)?;
+
+    Ok(())
+}
+
+pub fn clean_logs_dir() -> Result<()> {
+    let logs_dir = PathBuf::from("/tmp/build_logs");
+
+    fs::remove_dir_all(&logs_dir)?;
 
     Ok(())
 }
