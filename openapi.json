@@ -1,0 +1,449 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "sails-program-verifier",
+    "description": "Service for verifying Sails programs",
+    "contact": {
+      "name": "Gear Technologies"
+    },
+    "license": {
+      "name": "GPL-3.0",
+      "identifier": "GPL-3.0"
+    },
+    "version": "0.8.1"
+  },
+  "paths": {
+    "/code": {
+      "get": {
+        "tags": [
+          "code"
+        ],
+        "operationId": "code",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Code by id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Code"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/codes": {
+      "get": {
+        "tags": [
+          "code"
+        ],
+        "operationId": "codes",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "description": "List of code ids",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get list of codes by its ids",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CodesResponseEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/idl": {
+      "get": {
+        "tags": [
+          "idl"
+        ],
+        "operationId": "idl",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Idl by id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Idl"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/supported_versions": {
+      "get": {
+        "tags": [
+          "version"
+        ],
+        "operationId": "supported_versions",
+        "responses": {
+          "200": {
+            "description": "Supported Sails versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify": {
+      "post": {
+        "tags": [
+          "verify"
+        ],
+        "operationId": "verify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Verification request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify/status": {
+      "get": {
+        "tags": [
+          "verify"
+        ],
+        "operationId": "status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status of the verification request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "version"
+        ],
+        "operationId": "version",
+        "responses": {
+          "200": {
+            "description": "Version of the server",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Code": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "repo_link"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "idl_hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "repo_link": {
+            "type": "string"
+          }
+        }
+      },
+      "CodesResponseEntry": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "code": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Code",
+                "description": "Code details"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Code id"
+          }
+        }
+      },
+      "Idl": {
+        "type": "object",
+        "required": [
+          "id",
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "Project": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Package is located in the root directory of the repository",
+            "enum": [
+              "Root"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Name of the package to be built and its base path",
+            "required": [
+              "Package"
+            ],
+            "properties": {
+              "Package": {
+                "type": "string",
+                "description": "Name of the package to be built and its base path"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Manifest path of the package",
+            "required": [
+              "ManifestPath"
+            ],
+            "properties": {
+              "ManifestPath": {
+                "type": "string",
+                "description": "Manifest path of the package"
+              }
+            }
+          }
+        ]
+      },
+      "StatusResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code_id",
+          "repo_link",
+          "version",
+          "created_at"
+        ],
+        "properties": {
+          "base_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Base path of the package to be built"
+          },
+          "code_id": {
+            "type": "string",
+            "description": "Code ID"
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Timestamp of the verification",
+            "minimum": 0
+          },
+          "failed_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Reason for failure, if any"
+          },
+          "manifest_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Manifest path of the package"
+          },
+          "project_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Project name"
+          },
+          "repo_link": {
+            "type": "string",
+            "description": "Repository link"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the verification"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the Docker image used for verification"
+          }
+        }
+      },
+      "VerifyRequest": {
+        "type": "object",
+        "required": [
+          "repo_link",
+          "version",
+          "network",
+          "code_id"
+        ],
+        "properties": {
+          "base_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Base path of the package to be built (optional, default: root)"
+          },
+          "build_idl": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to build the IDL (default: false)"
+          },
+          "code_id": {
+            "type": "string",
+            "description": "ID of the deployed code"
+          },
+          "network": {
+            "type": "string",
+            "description": "Network where the code of the program is deployed"
+          },
+          "project": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Project",
+                "description": "Project to verify (optional, default: root)"
+              }
+            ]
+          },
+          "repo_link": {
+            "type": "string",
+            "description": "Link to the repository containing the code to be verified."
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the Docker image to use for verification."
+          }
+        }
+      },
+      "VerifyResponse": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the verification"
+          }
+        }
+      }
+    }
+  }
+}

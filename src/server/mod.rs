@@ -31,7 +31,7 @@ pub mod types;
         types::StatusResponse
     ))
 )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 pub async fn run_server(pool: Arc<Pool>) {
     let app = Router::new()

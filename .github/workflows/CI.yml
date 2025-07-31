@@ -53,7 +53,7 @@ jobs:
 
       - name: Run Test Build in Docker
         run: |
-          docker run -v $(pwd)/tests:/app --entrypoint /bin/bash builder -c 'cargo build --release'
+          docker run -v "$(pwd)/test-program:/app" --entrypoint /bin/bash builder -c 'cargo build --release'
 
       - name: Verify Build Output
         run: |
@@ -63,3 +63,15 @@ jobs:
           else
             echo "Success: WASM file found"
           fi
+
+  test-openapi-spec:
+    name: Test Docker Builder
+    runs-on: ubuntu-latest
+    needs: check-docker-build
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: cargo test
