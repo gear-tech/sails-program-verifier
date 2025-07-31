@@ -56,7 +56,7 @@ async fn write_container_logs(docker: &Docker, id: &str) -> Result<()> {
         Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
     );
 
-    let log_file_path = format!("{}/{}.log", LOGS_DIR, id);
+    let log_file_path = format!("{LOGS_DIR}/{id}.log");
     let mut log_file = std::fs::File::create(&log_file_path)?;
 
     while let Some(log_chunk) = logs.next().await {
@@ -65,7 +65,7 @@ async fn write_container_logs(docker: &Docker, id: &str) -> Result<()> {
                 log_file.write_all(&chunk.into_bytes())?;
             }
             Err(e) => {
-                log::error!("{}: Failed to read log chunk: {:?}", id, e);
+                log::error!("{id}: Failed to read log chunk: {e:?}");
             }
         }
     }
