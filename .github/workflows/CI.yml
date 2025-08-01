@@ -57,7 +57,7 @@ jobs:
 
       - name: Verify Build Output
         run: |
-          if [ ! -f tests/target/wasm32-gear/release/ping_pong.opt.wasm ]; then
+          if [ ! -f test-program/target/wasm32-gear/release/ping_pong.opt.wasm ]; then
             echo "Error: Expected WASM file not found"
             exit 1
           else
