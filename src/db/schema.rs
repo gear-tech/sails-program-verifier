@@ -43,6 +43,7 @@ diesel::table! {
         network -> Network,
         failed_reason -> Nullable<Text>,
         created_at -> Timestamp,
+        base_path -> Nullable<Varchar>,
     }
 }
 

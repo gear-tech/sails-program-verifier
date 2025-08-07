@@ -1,5 +1,9 @@
 use super::docker::{build_program, remove_container};
-use crate::{consts::PATH_TO_BUILDS, db::Verification, util::generate_code_id};
+use crate::{
+    consts::{LOGS_DIR, PATH_TO_BUILDS},
+    db::Verification,
+    util::generate_code_id,
+};
 use anyhow::{bail, Result};
 use std::{
     fs,
@@ -67,11 +71,18 @@ pub async fn build_project(verif: Verification) -> Result<BuildArtifacts> {
     })
 }
 
-pub async fn cleanup(verif_id: &str) -> Result<()> {
+pub async fn cleanup(verif_id: &str, success: bool) -> Result<()> {
     fs::remove_dir_all(get_project_path(verif_id))?;
     log::info!("{verif_id}: project dir cleaned");
 
     remove_container(verif_id).await?;
+
+    if success {
+        let log_file_path = format!("{LOGS_DIR}/{verif_id}.log");
+        if let Err(error) = std::fs::remove_file(&log_file_path) {
+            log::error!("Failed to remove logs file {}. {:?}", &log_file_path, error);
+        }
+    }
 
     Ok(())
 }

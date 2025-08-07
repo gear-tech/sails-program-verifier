@@ -1,6 +1,6 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
-use crate::consts::AVAILABLE_VERSIONS;
+use crate::consts::{AVAILABLE_VERSIONS, LOGS_DIR};
 use anyhow::{bail, Result};
 use blake2::{digest::typenum::U32, Blake2b, Digest};
 use rand::{self, distributions::Alphanumeric, thread_rng, Rng};
@@ -62,12 +62,24 @@ pub fn create_verifier_dockerfile(version: &str) -> Result<()> {
 WORKDIR /scripts
 COPY build.sh .
 RUN mkdir /mnt/target
-WORKDIR /app
+
 CMD ["/bin/sh", "../scripts/build.sh"]
 "#
     );
 
     fs::write(file_path, content)?;
+
+    Ok(())
+}
+
+pub fn clean_or_create_logs_dir() -> Result<()> {
+    let logs_dir = PathBuf::from(LOGS_DIR);
+
+    if logs_dir.exists() {
+        fs::remove_dir_all(&logs_dir)?;
+    }
+
+    fs::create_dir_all(&logs_dir)?;
 
     Ok(())
 }

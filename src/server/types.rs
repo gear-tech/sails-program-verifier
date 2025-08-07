@@ -4,10 +4,11 @@ use utoipa::{IntoParams, ToSchema};
 
 #[derive(Default, Deserialize, Debug, ToSchema)]
 pub enum Project {
+    /// Package is located in the root directory of the repository
     #[default]
     Root,
-    /// Name of the package to be built.
-    Name(String),
+    /// Name of the package to be built and its base path
+    Package(String),
     /// Manifest path of the package
     ManifestPath(String),
 }
@@ -18,6 +19,18 @@ pub struct StatusResponse {
     pub status: String,
     /// Reason for failure, if any
     pub failed_reason: Option<String>,
+    /// Code ID
+    pub code_id: String,
+    /// Repository link
+    pub repo_link: String,
+    /// Version of the Docker image used for verification
+    pub version: String,
+    /// Project name
+    pub project_name: Option<String>,
+    /// Manifest path of the package
+    pub manifest_path: Option<String>,
+    /// Base path of the package to be built
+    pub base_path: Option<String>,
     /// Timestamp of the verification
     pub created_at: u128,
 }
@@ -34,8 +47,10 @@ pub struct VerifyRequest {
     pub repo_link: String,
     /// Version of the Docker image to use for verification.
     pub version: String,
-    /// Project to verify (default: root)
+    /// Project to verify (optional, default: root)
     pub project: Option<Project>,
+    /// Base path of the package to be built (optional, default: root)
+    pub base_path: Option<String>,
     /// Network where the code of the program is deployed
     pub network: String,
     /// ID of the deployed code

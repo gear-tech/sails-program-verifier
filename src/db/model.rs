@@ -105,6 +105,7 @@ pub struct Verification {
     pub network: Network,
     pub failed_reason: Option<String>,
     pub created_at: SystemTime,
+    pub base_path: Option<String>,
 }
 
 impl Verification {

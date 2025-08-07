@@ -72,8 +72,11 @@ After successful authentication, you can run the Docker command from the previou
 
 ## API Documentation
 
-The `sails-program-verifier` service provides a REST API for verifying Sails programs. Below are the available endpoints.
+The `sails-program-verifier` service provides a REST API for verifying Sails programs. 
 
+**📋 Full OpenAPI Specification:** [openapi.json](openapi.json)
+
+Below are the available endpoints:
 
 ### 1. Get Verified Code
 **Endpoint:** `GET /code`
@@ -94,7 +97,35 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 
 ---
 
-### 2. Get IDL for Verified Code
+### 2. Get Multiple Verified Codes
+**Endpoint:** `GET /codes`
+**Description:** Retrieves a list of verified codes by their IDs.
+
+**Query Parameters:**
+- `ids` *(array of strings, required)* – List of code identifiers.
+
+**Response:**
+```json
+[
+  {
+    "id": "12345",
+    "code": {
+      "id": "12345",
+      "idl_hash": "abcdef123456",
+      "name": "MyContract",
+      "repo_link": "https://github.com/user/repo"
+    }
+  },
+  {
+    "id": "67890",
+    "code": null
+  }
+]
+```
+
+---
+
+### 3. Get IDL for Verified Code
 **Endpoint:** `GET /idl`
 **Description:** Retrieves the IDL (Interface Definition Language) for a verified contract by ID.
 
@@ -111,7 +142,7 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 
 ---
 
-### 3. Get Supported Sails Versions
+### 4. Get Supported Sails Versions
 **Endpoint:** `GET /supported_versions`
 **Description:** Returns a list of Sails versions supported by the verifier.
 
@@ -125,7 +156,7 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 
 ---
 
-### 4. Submit a Verification Request
+### 5. Submit a Verification Request
 **Endpoint:** `POST /verify`
 **Description:** Submits a program for verification.
 
@@ -133,12 +164,19 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 ```json
 {
   "repo_link": "https://github.com/user/repo",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "network": "testnet",
   "code_id": "0x12345",
-  "build_idl": true
+  "build_idl": true,
+  "base_path": null,
+  "project": "Root"
 }
 ```
+
+**Project Options:**
+- `"Root"` – Build from root directory
+- `{"Package": "package_name"}` – Build specific package by name
+- `{"ManifestPath": "path/to/Cargo.toml"}` – Build using specific manifest path
 
 **Response:**
 ```json
@@ -149,7 +187,7 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 
 ---
 
-### 5. Check Verification Status
+### 6. Check Verification Status
 **Endpoint:** `GET /verify/status`
 **Description:** Checks the status of a verification request.
 
@@ -160,11 +198,18 @@ The `sails-program-verifier` service provides a REST API for verifying Sails pro
 ```json
 {
   "status": "completed",
+  "code_id": "0x12345",
+  "repo_link": "https://github.com/user/repo",
+  "version": "0.8.1",
   "created_at": 1700000000,
-  "failed_reason": null
+  "failed_reason": null,
+  "base_path": null,
+  "manifest_path": null,
+  "project_name": null
 }
 ```
-Possible `status` values:
+
+**Possible `status` values:**
 - `"pending"` – Verification is in progress.
 - `"completed"` – Verification was successful.
 - `"failed"` – Verification failed (see `failed_reason` for details).

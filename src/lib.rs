@@ -7,3 +7,4 @@ pub mod util;
 
 pub use processor::{network_client::Client, prune_containers, run_processor, *};
 pub use server::run_server;
+pub use server::ApiDoc;

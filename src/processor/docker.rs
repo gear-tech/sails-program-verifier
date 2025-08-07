@@ -1,4 +1,7 @@
-use crate::{consts::IMAGE_NAME, db::Verification};
+use crate::{
+    consts::{IMAGE_NAME, LOGS_DIR},
+    db::Verification,
+};
 use anyhow::{bail, Result};
 use bollard::{
     body_full,
@@ -12,7 +15,7 @@ use bollard::{
     Docker,
 };
 use futures::{StreamExt, TryStreamExt};
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write};
 use tar::Builder;
 
 pub async fn prune_containers() -> Result<()> {
@@ -47,6 +50,30 @@ pub async fn remove_container(id: &str) -> Result<()> {
     Ok(())
 }
 
+async fn write_container_logs(docker: &Docker, id: &str) -> Result<()> {
+    let mut logs = docker.logs(
+        id,
+        Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
+    );
+
+    let log_file_path = format!("{LOGS_DIR}/{id}.log");
+    let mut log_file = std::fs::File::create(&log_file_path)?;
+
+    while let Some(log_chunk) = logs.next().await {
+        match log_chunk {
+            Ok(chunk) => {
+                log_file.write_all(&chunk.into_bytes())?;
+            }
+            Err(e) => {
+                log::error!("{id}: Failed to read log chunk: {e:?}");
+            }
+        }
+    }
+    log_file.flush()?;
+
+    Ok(())
+}
+
 pub async fn build_program(verif: &Verification, project_path: &str) -> Result<String> {
     log::debug!("{}: Start building program. {}", &verif.id, project_path);
     let docker = Docker::connect_with_local_defaults()?;
@@ -62,8 +89,14 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
         "MANIFEST_PATH={}",
         &verif.manifest_path.clone().unwrap_or_default()
     );
+    let base_path_env = format!("BASE_PATH={}", &verif.base_path.clone().unwrap_or_default());
 
-    let mut env: Vec<String> = vec![repo_url_env, project_name_env, manifest_path_env];
+    let mut env: Vec<String> = vec![
+        repo_url_env,
+        project_name_env,
+        manifest_path_env,
+        base_path_env,
+    ];
 
     if verif.build_idl {
         env.push("BUILD_IDL=true".to_string());
@@ -114,30 +147,28 @@ pub async fn build_program(verif: &Verification, project_path: &str) -> Result<S
             ),
         )
         .try_collect::<Vec<_>>()
-        .await?;
+        .await;
 
-    let logs = docker.logs(
-        &id,
-        Some(LogsOptionsBuilder::new().stdout(true).stderr(true).build()),
-    );
+    if let Err(e) = c_result {
+        log::error!("{}: Failed to wait for container: {:?}", &verif.id, e);
+        write_container_logs(&docker, &verif.id).await?;
+        bail!("Failed to wait for container");
+    } else {
+        for r in c_result.unwrap() {
+            log::info!(
+                "{}: error: {:?} || status code: {}",
+                &verif.id,
+                r.error,
+                r.status_code
+            );
+        }
 
-    logs.for_each(|l| async move {
-        log::debug!("{}: {:?}", &verif.id, l);
-    })
-    .await;
+        write_container_logs(&docker, &verif.id).await?;
 
-    for r in c_result {
-        log::info!(
-            "{}: error: {:?} || status code: {}",
-            &verif.id,
-            r.error,
-            r.status_code
-        );
+        log::info!("{}: container exited({})", &verif.id, &id[0..12]);
+
+        Ok(id)
     }
-
-    log::info!("{}: container exited({})", &verif.id, &id[0..12]);
-
-    Ok(id)
 }
 
 pub async fn build_verifier_image(version: &str) -> Result<()> {
